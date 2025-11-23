@@ -8,6 +8,7 @@ const TAG = "Constants"
 
 const TECHNIQUE_PASSING_TONE = "passing_tone"
 const TECHNIQUE_NEIGHBOR_TONE = "neighbor_tone"
+const TECHNIQUE_NEIGHBOR_TONE_FORCED = "neighbor_tone_forced"
 const TECHNIQUE_APPOGGIATURA = "appoggiatura"
 const TECHNIQUE_CHROMATIC_PASSING_TONE = "chromatic_passing_tone"
 const TECHNIQUE_CHROMATIC_NEIGHBOR_TONE = "chromatic_neighbor_tone"

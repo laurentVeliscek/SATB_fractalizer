@@ -86,7 +86,6 @@ func to_json_array(progression):
 			json_alterations[str(key)] = chord.scale_context.alterations[key]
 
 		var json_chord = {
-			"index": chord.id,
 			"pos": chord.start_time,
 			"length_beats": chord.duration,
 			"key_midi_root": chord.scale_context.root,
