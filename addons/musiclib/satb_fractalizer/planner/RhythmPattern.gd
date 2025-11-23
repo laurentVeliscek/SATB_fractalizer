@@ -125,6 +125,11 @@ func _score_pattern(pattern_dict, technique_id, beat_positions, grid_unit):
 		if _is_equal_division(pattern):
 			score += 30
 
+	elif technique_id == Constants.TECHNIQUE_CHROMATIC_PASSING_TONE:
+		# Same as passing_tone: prefer equal subdivisions
+		if _is_equal_division(pattern):
+			score += 30
+
 	elif technique_id == Constants.TECHNIQUE_APPOGGIATURA:
 		# Prefer long-short (tension-resolution)
 		if note_count == 2 and pattern[0] > pattern[1]:
@@ -142,6 +147,11 @@ func _score_pattern(pattern_dict, technique_id, beat_positions, grid_unit):
 
 	elif technique_id == Constants.TECHNIQUE_NEIGHBOR_TONE_FORCED:
 		# Same scoring as neighbor_tone (3-note pattern: anchor → neighbor → anchor)
+		if _is_equal_division(pattern):
+			score += 20
+
+	elif technique_id == Constants.TECHNIQUE_DOUBLE_NEIGHBOR:
+		# 5-note pattern: prefer equal subdivisions
 		if _is_equal_division(pattern):
 			score += 20
 
