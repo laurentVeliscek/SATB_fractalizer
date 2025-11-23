@@ -93,12 +93,15 @@ func run():
 	LogBus.info(TAG, "Total chords: " + str(result.chords.size()))
 	LogBus.info(TAG, "\n===== PASS 2 =====")
 	LogBus.info(TAG, "Total chords: " + str(result2.chords.size()))
-	LogBus.info(TAG, "\n===== Result2 (full) =====")
-	LogBus.info(TAG, "\n\nResult2 (full): " + JSON.print(result2, "\t"))
+	LogBus.info(TAG, "\n\n*******************************************")
+	LogBus.info(TAG, "\n\n===== Result (full) =====")
+	LogBus.info(TAG, "\nResult (full): " + JSON.print(result, "\t"))
+	LogBus.info(TAG, "\n\n===== Result2 (full) =====")
+	LogBus.info(TAG, "Result2 (full): " + JSON.print(result2, "\t"))
 	
-	for c in result2.chords:
-		if c["kind"] == "decorative":
-			LogBus.info(TAG, JSON.print(c, "\t"))
+#	for c in result2.chords:
+#		if c["kind"] == "decorative":
+#			LogBus.info(TAG, JSON.print(c, "\t"))
 		
 	#LogBus.info(TAG, "\n\nResult2 (full): " + JSON.print(result2.chords, "\t"))
 	
