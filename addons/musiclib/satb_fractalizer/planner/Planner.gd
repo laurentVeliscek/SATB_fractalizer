@@ -14,6 +14,8 @@ var EscapeTone = load("res://addons/musiclib/satb_fractalizer/techniques/EscapeT
 var Anticipation = load("res://addons/musiclib/satb_fractalizer/techniques/Anticipation.gd")
 var Suspension = load("res://addons/musiclib/satb_fractalizer/techniques/Suspension.gd")
 var Retardation = load("res://addons/musiclib/satb_fractalizer/techniques/Retardation.gd")
+var Pedal = load("res://addons/musiclib/satb_fractalizer/techniques/Pedal.gd")
+var ExtendedPassingTones = load("res://addons/musiclib/satb_fractalizer/techniques/ExtendedPassingTones.gd")
 
 # =============================================================================
 # MAIN ENTRY POINT
@@ -53,7 +55,8 @@ func apply(chords_array, params):
 		return chords_array
 
 	# Initialize metadata with global parameters (stored once, not repeated per window)
-	progression.metadata["generation_depth"] = 0
+	var current_depth = progression.metadata.get("generation_depth", 0)
+	progression.metadata["generation_depth"] = current_depth
 	progression.metadata["rng_seed"] = rng_seed
 	progression.metadata["global_params"] = {
 		"time_num": time_num,
@@ -64,6 +67,10 @@ func apply(chords_array, params):
 		"pair_selection_strategy": pair_strategy,
 		"allowed_techniques": allowed_techniques.duplicate()
 	}
+
+	# Store initial progression (only on first pass)
+	if not progression.metadata.has("initial_progression"):
+		progression.metadata["initial_progression"] = adapter.to_json_array(progression)
 
 	LogBus.info(TAG, "Converted to Progression: " + str(progression.get_chord_count()) + " chords")
 
@@ -278,6 +285,10 @@ func _create_technique_instance(technique_id):
 		return Suspension.new()
 	elif technique_id == Constants.TECHNIQUE_RETARDATION:
 		return Retardation.new()
+	elif technique_id == Constants.TECHNIQUE_PEDAL:
+		return Pedal.new()
+	elif technique_id == Constants.TECHNIQUE_EXTENDED_PASSING_TONES:
+		return ExtendedPassingTones.new()
 	else:
 		LogBus.error(TAG, "_create_technique_instance: unknown technique " + technique_id)
 		return null
