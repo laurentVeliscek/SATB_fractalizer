@@ -24,7 +24,7 @@ func run():
 	for i in range(0,number_of_windows):
 		generated_time_windows.append( {"start": begin_pos + (window_length * i), "end": begin_pos + (window_length * (i+1))})
 		
-	LogBus.debug(TAG,"generated_time_windows: "+ str(generated_time_windows))
+	#LogBus.debug(TAG,"generated_time_windows: "+ str(generated_time_windows))
 	
 	
 	# Configure planner - First pass
@@ -45,15 +45,15 @@ func run():
 	var result = planner.apply(test_chords, params)
 
 	# Display first pass result
-	LogBus.info(TAG, "\n===== First Pass Result =====")
-	LogBus.info(TAG, "Original chords: " + str(test_chords.size()))
-	LogBus.info(TAG, "Result chords: " + str(result.chords.size()))
-	LogBus.info(TAG, "Result (first 3 chords): " + JSON.print(result.chords.slice(0, 2), "\t"))
-	LogBus.info(TAG, "\n--- Progression Metadata ---")
-	LogBus.info(TAG, "Generation depth: " + str(result.metadata.get("generation_depth", 0)))
-	LogBus.info(TAG, "RNG seed: " + str(result.metadata.get("rng_seed", "N/A")))
-	LogBus.info(TAG, "History entries: " + str(result.metadata.history.size()))
-	LogBus.info(TAG, "Time windows processed: " + str(result.metadata.technique_report.time_windows.size()))
+#	LogBus.info(TAG, "\n===== First Pass Result =====")
+#	LogBus.info(TAG, "Original chords: " + str(test_chords.size()))
+#	LogBus.info(TAG, "Result chords: " + str(result.chords.size()))
+#	LogBus.info(TAG, "Result (first 3 chords): " + JSON.print(result.chords.slice(0, 2), "\t"))
+#	LogBus.info(TAG, "\n--- Progression Metadata ---")
+#	LogBus.info(TAG, "Generation depth: " + str(result.metadata.get("generation_depth", 0)))
+#	LogBus.info(TAG, "RNG seed: " + str(result.metadata.get("rng_seed", "N/A")))
+#	LogBus.info(TAG, "History entries: " + str(result.metadata.history.size()))
+#	LogBus.info(TAG, "Time windows processed: " + str(result.metadata.technique_report.time_windows.size()))
 
 	# Re-inject result into planner for second pass
 	LogBus.info(TAG, "\n===== SECOND PASS (RE-INJECTION) =====")
@@ -66,27 +66,40 @@ func run():
 		"allowed_techniques": ["passing_tone", "neighbor_tone"],
 		"voice_window_pattern": "SATB",
 		"triplet_allowed": false,
-		"rng_seed": 42
+		"rng_seed": 55
 	}
 
 	var result2 = planner2.apply(result.chords, params2)
 
 	# Display second pass result
-	LogBus.info(TAG, "\n===== Second Pass Result =====")
-	LogBus.info(TAG, "First pass chords: " + str(result.chords.size()))
-	LogBus.info(TAG, "Second pass chords: " + str(result2.chords.size()))
-	LogBus.info(TAG, "Result2 (first 3 chords): " + JSON.print(result2.chords.slice(0, 2), "\t"))
-	LogBus.info(TAG, "\n--- Second Pass Metadata ---")
-	LogBus.info(TAG, "Generation depth: " + str(result2.metadata.get("generation_depth", 0)))
-	LogBus.info(TAG, "History entries: " + str(result2.metadata.history.size()))
-	LogBus.info(TAG, "Time windows processed: " + str(result2.metadata.technique_report.time_windows.size()))
+#	LogBus.info(TAG, "\n===== Second Pass Result =====")
+#	LogBus.info(TAG, "First pass chords: " + str(result.chords.size()))
+#	LogBus.info(TAG, "Second pass chords: " + str(result2.chords.size()))
+#	LogBus.info(TAG, "Result2 (first 3 chords): " + JSON.print(result2.chords.slice(0, 2), "\t"))
+#	LogBus.info(TAG, "\n--- Second Pass Metadata ---")
+#	LogBus.info(TAG, "Generation depth: " + str(result2.metadata.get("generation_depth", 0)))
+#	LogBus.info(TAG, "History entries: " + str(result2.metadata.history.size()))
+#	LogBus.info(TAG, "Time windows processed: " + str(result2.metadata.technique_report.time_windows.size()))
 
 	LogBus.info(TAG, "\n===== Test Complete =====")
 	
-	LogBus.info(TAG, "\n===== RESULT FULL =====")
-	LogBus.info(TAG, "\n\nResult (full): " + JSON.print(result, "\t"))
-	LogBus.info(TAG, "\n\n===== RESULT2 FULL =====")
-	LogBus.info(TAG, "\n\nResult2 (full): " + JSON.print(result2, "\t"))
+#	LogBus.info(TAG, "\n===== RESULT FULL =====")
+#	LogBus.info(TAG, "\n\nResult (full): " + JSON.print(result, "\t"))
+#	LogBus.info(TAG, "\n\n===== RESULT2 FULL =====")
+#	LogBus.info(TAG, "\n\nResult2 (full): " + JSON.print(result2, "\t"))
+	
+	LogBus.info(TAG, "\n===== Bilan =====")
+	LogBus.info(TAG, "\n===== PASS 1 =====")
+	LogBus.info(TAG, "Total chords: " + str(result.chords.size()))
+	LogBus.info(TAG, "\n===== PASS 2 =====")
+	LogBus.info(TAG, "Total chords: " + str(result2.chords.size()))
+	
+	for c in result2.chords:
+		if c["kind"] == "decorative":
+			LogBus.info(TAG, JSON.print(c, "\t"))
+		
+	#LogBus.info(TAG, "\n\nResult2 (full): " + JSON.print(result2.chords, "\t"))
+	
 
 func _load_chords_from_file():
 	# Load chords from chords.json file
