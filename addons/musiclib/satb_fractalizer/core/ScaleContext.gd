@@ -35,6 +35,7 @@ func _build_real_scale():
 		# Check if this degree has an alteration
 		if alterations.has(degree):
 			step += alterations[degree]
+			step = int(step)  # Force int after addition (alterations may be floats)
 
 		result.append(step)
 
