@@ -94,6 +94,7 @@ func apply(progression, params):
 		return progression
 
 	# 7. Create new chords
+	var generation_depth = progression.metadata.get("generation_depth", 0) + 1
 	var new_chords = _create_chords_from_pattern(
 		chord_a,
 		chord_b,
@@ -101,7 +102,9 @@ func apply(progression, params):
 		voice_id,
 		pitches,
 		Constants.TECHNIQUE_APPOGGIATURA,
-		Constants.ROLE_APPOGGIATURA
+		Constants.ROLE_APPOGGIATURA,
+		progression.time_grid,
+		generation_depth
 	)
 
 	# 8. Validate NCT pitches

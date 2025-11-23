@@ -29,6 +29,14 @@ func apply(chords_array, params):
 	var triplet_allowed = params.get("triplet_allowed", Constants.DEFAULT_TRIPLET_ALLOWED)
 	var pair_strategy = params.get("pair_selection_strategy", Constants.STRATEGY_EARLIEST)
 
+	# Initialize RNG with seed (for reproducibility)
+	var rng_seed = params.get("rng_seed", null)
+	if rng_seed == null:
+		rng_seed = OS.get_ticks_msec()
+	randomize()
+	seed(rng_seed)
+	LogBus.info(TAG, "RNG seed: " + str(rng_seed) + " (for reproducibility)")
+
 	# 1. Convert JSON Array to Progression
 	var adapter = ProgressionAdapter.new()
 	var progression = adapter.from_json_array(chords_array, time_num, time_den, grid_unit)
@@ -36,6 +44,12 @@ func apply(chords_array, params):
 	if not progression:
 		LogBus.error(TAG, "Failed to convert JSON to Progression")
 		return chords_array
+
+	# Initialize metadata
+	progression.metadata["generation_depth"] = 0
+	progression.metadata["rng_seed"] = rng_seed
+	progression.metadata["voice_window_pattern"] = voice_pattern
+	progression.metadata["triplet_allowed"] = triplet_allowed
 
 	LogBus.info(TAG, "Converted to Progression: " + str(progression.get_chord_count()) + " chords")
 
@@ -52,6 +66,7 @@ func apply(chords_array, params):
 		progression = _process_window(
 			progression,
 			window,
+			w,  # window_index
 			pattern_voice,
 			allowed_techniques,
 			triplet_allowed,
@@ -100,26 +115,47 @@ func _get_pattern_voice(window_index, pattern):
 # PROCESS WINDOW
 # =============================================================================
 
-func _process_window(progression, window, voice_id, allowed_techniques, triplet_allowed, pair_strategy, global_params):
+func _process_window(progression, window, window_index, voice_id, allowed_techniques, triplet_allowed, pair_strategy, global_params):
 	# Select and apply one technique for this window
+
+	# Initialize window report
+	var window_report = {
+		"start": window.start,
+		"end": window.end,
+		"window_index": window_index,
+		"pattern_voice": voice_id,
+		"candidate_techniques": allowed_techniques.duplicate(),
+		"candidate_voices": [voice_id],
+		"chosen_technique": null,
+		"chosen_span": null,
+		"applied": false,
+		"reason_if_skipped": null
+	}
 
 	# Check if voice is modifiable
 	if not _is_voice_modifiable(progression, voice_id):
 		LogBus.warn(TAG, "Voice " + voice_id + " is not modifiable, skipping window")
+		window_report.reason_if_skipped = "pattern_voice_not_modifiable"
+		progression.metadata.technique_report.time_windows.append(window_report)
 		return progression
 
 	# Select a technique
 	var chosen_technique = _select_technique(allowed_techniques)
 	if not chosen_technique:
 		LogBus.warn(TAG, "No technique selected, skipping window")
+		window_report.reason_if_skipped = "no_technique_selected"
+		progression.metadata.technique_report.time_windows.append(window_report)
 		return progression
 
+	window_report.chosen_technique = chosen_technique
 	LogBus.info(TAG, "Applying technique: " + chosen_technique + " on voice " + voice_id)
 
 	# Create technique instance
 	var technique = _create_technique_instance(chosen_technique)
 	if not technique:
 		LogBus.error(TAG, "Failed to create technique instance for " + chosen_technique)
+		window_report.reason_if_skipped = "technique_instantiation_failed"
+		progression.metadata.technique_report.time_windows.append(window_report)
 		return progression
 
 	# Prepare params for technique
@@ -135,11 +171,35 @@ func _process_window(progression, window, voice_id, allowed_techniques, triplet_
 		if not technique_params.has(key):
 			technique_params[key] = global_params[key]
 
-	# Apply technique
-	var new_progression = technique.apply(progression, technique_params)
+	# Record in history (before applying)
+	var history_entry = {
+		"op": "apply_" + chosen_technique,
+		"params": technique_params.duplicate(),
+		"window_index": window_index,
+		"timestamp": OS.get_datetime(),
+		"status": "pending"
+	}
 
-	# Record in metadata
-	# (TODO: add to progression.metadata.history)
+	# Apply technique
+	var chord_count_before = progression.get_chord_count()
+	var new_progression = technique.apply(progression, technique_params)
+	var chord_count_after = new_progression.get_chord_count()
+
+	# Check if technique was actually applied
+	if chord_count_after > chord_count_before:
+		window_report.applied = true
+		history_entry.status = "success"
+		history_entry.chords_added = chord_count_after - chord_count_before
+		LogBus.info(TAG, "Technique applied successfully: " + str(chord_count_after - chord_count_before) + " chords added")
+	else:
+		window_report.applied = false
+		window_report.reason_if_skipped = "technique_conditions_not_met"
+		history_entry.status = "skipped"
+		LogBus.warn(TAG, "Technique was not applied (conditions not met)")
+
+	# Record in progression metadata
+	new_progression.metadata.history.append(history_entry)
+	new_progression.metadata.technique_report.time_windows.append(window_report)
 
 	return new_progression
 

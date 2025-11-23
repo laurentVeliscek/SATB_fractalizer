@@ -55,9 +55,11 @@ func _choose_rhythm_pattern(n_cells, progression, technique_id, triplet_allowed)
 # UTILITY: CREATE NEW CHORDS FROM PATTERN
 # =============================================================================
 
-func _create_chords_from_pattern(chord_a, chord_b, pattern, voice_id, pitches, technique_id, role):
+func _create_chords_from_pattern(chord_a, chord_b, pattern, voice_id, pitches, technique_id, role, time_grid, generation_depth):
 	# pattern: {"pattern": [durations...], "triplet": bool}
 	# pitches: Array of MIDI pitches (same length as pattern.pattern)
+	# time_grid: TimeGrid for beat strength calculation
+	# generation_depth: int, how many fractalizer passes have been applied
 	# Returns: Array of Chord objects
 
 	var new_chords = []
@@ -88,6 +90,20 @@ func _create_chords_from_pattern(chord_a, chord_b, pattern, voice_id, pitches, t
 			else:
 				new_voices[voice_id].direction = Constants.DIRECTION_STATIC
 
+		# Enrich voice metadata
+		var beat_strength = time_grid.get_beat_strength(current_time) if time_grid else Constants.BEAT_WEAK
+		var scale_degree = chord_a.scale_context.get_scale_degree(pitch) if chord_a.scale_context else -1
+
+		new_voices[voice_id].metadata = {
+			"beat_strength": beat_strength,
+			"scale_degree": scale_degree,
+			"generated_at_time": current_time,
+			"from_chord": chord_a.id,
+			"to_chord": chord_b.id,
+			"pattern_index": i,
+			"pattern_total": durations.size()
+		}
+
 		# Create new chord
 		var new_chord = Chord.new(
 			-1,  # ID will be reassigned later
@@ -98,6 +114,17 @@ func _create_chords_from_pattern(chord_a, chord_b, pattern, voice_id, pitches, t
 			"decorative"  # kind
 		)
 		new_chord.techniques_applied.append(technique_id)
+
+		# Enrich chord metadata
+		new_chord.metadata = {
+			"generated_by": technique_id,
+			"generation_depth": generation_depth,
+			"comments": technique_id + " in " + voice_id + " between chord " + str(chord_a.id) + " and " + str(chord_b.id),
+			"source_chord_a": chord_a.id,
+			"source_chord_b": chord_b.id,
+			"modified_voice": voice_id,
+			"triplet": pattern.get("triplet", false)
+		}
 
 		new_chords.append(new_chord)
 		current_time += dur
