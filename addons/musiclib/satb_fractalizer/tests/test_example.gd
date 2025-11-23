@@ -34,12 +34,12 @@ func run():
 		"time_den": 4,
 		"grid_unit": 0.25,
 		"time_windows": generated_time_windows,
-		"allowed_techniques": ["passing_tone", "neighbor_tone", "appoggiatura"],
+		"allowed_techniques": ["passing_tone", "neighbor_tone", "appoggiatura", "chromatic_passing_tone", "double_neighbor"],
 		"voice_window_pattern": "SATB",
 		"triplet_allowed": false,
 		"rng_seed": 42
 	}
-
+## ["passing_tone", "neighbor_tone", "appoggiatura", "chromatic_passing_tone", "double_neighbor"]
 	# Apply fractalizer - First pass
 	LogBus.info(TAG, "\n===== FIRST PASS =====")
 	var result = planner.apply(test_chords, params)
@@ -63,7 +63,7 @@ func run():
 		"time_den": 4,
 		"grid_unit": 0.125,
 		"time_windows": generated_time_windows,
-		"allowed_techniques": ["passing_tone", "neighbor_tone"],
+		"allowed_techniques": ["passing_tone", "neighbor_tone", "appoggiatura", "chromatic_passing_tone", "double_neighbor"],
 		"voice_window_pattern": "SATB",
 		"triplet_allowed": false,
 		"rng_seed": 55
@@ -93,6 +93,8 @@ func run():
 	LogBus.info(TAG, "Total chords: " + str(result.chords.size()))
 	LogBus.info(TAG, "\n===== PASS 2 =====")
 	LogBus.info(TAG, "Total chords: " + str(result2.chords.size()))
+	LogBus.info(TAG, "\n===== Result2 (full) =====")
+	LogBus.info(TAG, "\n\nResult2 (full): " + JSON.print(result2, "\t"))
 	
 	for c in result2.chords:
 		if c["kind"] == "decorative":
