@@ -10,6 +10,10 @@ var NeighborTone = load("res://addons/musiclib/satb_fractalizer/techniques/Neigh
 var NeighborToneForced = load("res://addons/musiclib/satb_fractalizer/techniques/NeighborToneForced.gd")
 var DoubleNeighbor = load("res://addons/musiclib/satb_fractalizer/techniques/DoubleNeighbor.gd")
 var Appoggiatura = load("res://addons/musiclib/satb_fractalizer/techniques/Appoggiatura.gd")
+var EscapeTone = load("res://addons/musiclib/satb_fractalizer/techniques/EscapeTone.gd")
+var Anticipation = load("res://addons/musiclib/satb_fractalizer/techniques/Anticipation.gd")
+var Suspension = load("res://addons/musiclib/satb_fractalizer/techniques/Suspension.gd")
+var Retardation = load("res://addons/musiclib/satb_fractalizer/techniques/Retardation.gd")
 
 # =============================================================================
 # MAIN ENTRY POINT
@@ -266,6 +270,14 @@ func _create_technique_instance(technique_id):
 		return DoubleNeighbor.new()
 	elif technique_id == Constants.TECHNIQUE_APPOGGIATURA:
 		return Appoggiatura.new()
+	elif technique_id == Constants.TECHNIQUE_ESCAPE_TONE:
+		return EscapeTone.new()
+	elif technique_id == Constants.TECHNIQUE_ANTICIPATION:
+		return Anticipation.new()
+	elif technique_id == Constants.TECHNIQUE_SUSPENSION:
+		return Suspension.new()
+	elif technique_id == Constants.TECHNIQUE_RETARDATION:
+		return Retardation.new()
 	else:
 		LogBus.error(TAG, "_create_technique_instance: unknown technique " + technique_id)
 		return null

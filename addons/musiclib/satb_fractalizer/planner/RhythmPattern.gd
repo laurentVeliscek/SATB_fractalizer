@@ -155,6 +155,21 @@ func _score_pattern(pattern_dict, technique_id, beat_positions, grid_unit):
 		if _is_equal_division(pattern):
 			score += 20
 
+	elif technique_id == Constants.TECHNIQUE_ESCAPE_TONE:
+		# 3-note pattern: prefer equal subdivisions
+		if _is_equal_division(pattern):
+			score += 20
+
+	elif technique_id == Constants.TECHNIQUE_SUSPENSION:
+		# Prefer long-short (suspension longer, resolution shorter)
+		if note_count == 2 and pattern[0] > pattern[1]:
+			score += 30
+
+	elif technique_id == Constants.TECHNIQUE_RETARDATION:
+		# Same as suspension: prefer long-short
+		if note_count == 2 and pattern[0] > pattern[1]:
+			score += 30
+
 	# 3. Avoid excessive syncopation
 	# (Simplified: just check if notes cross strong beats)
 	# For now, we'll skip this check (would require more context)
