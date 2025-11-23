@@ -75,11 +75,17 @@ func apply(chords_array, params):
 		)
 
 	# 3. Convert Progression back to JSON Array
-	var result = adapter.to_json_array(progression)
+	var result_chords = adapter.to_json_array(progression)
 
-	if not result:
+	if not result_chords:
 		LogBus.error(TAG, "Failed to convert Progression to JSON")
 		return chords_array
+
+	# 4. Build result object with chords and metadata
+	var result = {
+		"chords": result_chords,
+		"metadata": progression.metadata.duplicate(true)
+	}
 
 	LogBus.info(TAG, "=== SATB Fractalizer: Complete ===")
 	return result
