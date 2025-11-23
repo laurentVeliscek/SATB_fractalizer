@@ -1,6 +1,6 @@
 extends Node
 
-const TAG = "TechniqueBase"
+const TAG2 = "TechniqueBase"
 const Constants = preload("res://addons/musiclib/satb_fractalizer/core/Constants.gd")
 const Voice = preload("res://addons/musiclib/satb_fractalizer/core/Voice.gd")
 const Chord = preload("res://addons/musiclib/satb_fractalizer/core/Chord.gd")
@@ -12,7 +12,7 @@ const RhythmPattern = preload("res://addons/musiclib/satb_fractalizer/planner/Rh
 # =============================================================================
 
 func apply(progression, params):
-	LogBus.error(TAG, "apply() must be overridden in subclass")
+	LogBus.error(TAG2, "apply() must be overridden in subclass")
 	return progression
 
 # =============================================================================
@@ -26,7 +26,7 @@ func _select_chord_pair(progression, window, strategy):
 	var pairs = progression.get_chord_pairs_in_window(window.start, window.end)
 
 	if pairs.empty():
-		LogBus.warn(TAG, "_select_chord_pair: no chord pairs in window [" + str(window.start) + ", " + str(window.end) + "]")
+		LogBus.warn(TAG2, "_select_chord_pair: no chord pairs in window [" + str(window.start) + ", " + str(window.end) + "]")
 		return null
 
 	var selected = progression.select_chord_pair(pairs, strategy)
@@ -115,7 +115,7 @@ func _validate_permissions(progression, voice_id, chord_indices):
 	if progression.voice_policy.has(voice_id):
 		var policy = progression.voice_policy[voice_id]
 		if policy.has("modifiable") and not policy.modifiable:
-			LogBus.warn(TAG, "_validate_permissions: voice " + voice_id + " is not modifiable")
+			LogBus.warn(TAG2, "_validate_permissions: voice " + voice_id + " is not modifiable")
 			return false
 
 	# Check if voices are locked in the chords
@@ -123,7 +123,7 @@ func _validate_permissions(progression, voice_id, chord_indices):
 		var chord = progression.get_chord_at_index(idx)
 		if chord and chord.voices.has(voice_id):
 			if chord.voices[voice_id].locked:
-				LogBus.warn(TAG, "_validate_permissions: voice " + voice_id + " is locked in chord " + str(idx))
+				LogBus.warn(TAG2, "_validate_permissions: voice " + voice_id + " is locked in chord " + str(idx))
 				return false
 
 	return true
@@ -144,7 +144,7 @@ func _validate_nct_pitches(progression, new_chords, voice_id, original_pitch):
 		# Validate range
 		var range_check = VoiceLeading.validate_range(voice_id, new_pitch, original_pitch, adjacent)
 		if not range_check.valid:
-			LogBus.warn(TAG, "_validate_nct_pitches: " + range_check.reason)
+			LogBus.warn(TAG2, "_validate_nct_pitches: " + range_check.reason)
 			return false
 
 		# Validate voice crossing
@@ -155,7 +155,7 @@ func _validate_nct_pitches(progression, new_chords, voice_id, original_pitch):
 
 		var crossing_check = VoiceLeading.check_voice_crossing(s, a, t, b)
 		if not crossing_check.valid:
-			LogBus.warn(TAG, "_validate_nct_pitches: " + crossing_check.reason)
+			LogBus.warn(TAG2, "_validate_nct_pitches: " + crossing_check.reason)
 			return false
 
 	return true
