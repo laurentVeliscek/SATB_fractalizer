@@ -22,11 +22,18 @@ func from_json_array(chords_array, time_num, time_den, grid_unit):
 	for i in range(chords_array.size()):
 		var json_chord = chords_array[i]
 
+		# Convert key_alterations string keys to integers
+		var alterations = {}
+		var json_alterations = json_chord.get("key_alterations", {})
+		for key in json_alterations.keys():
+			var int_key = int(key)
+			alterations[int_key] = json_alterations[key]
+
 		# Build ScaleContext
 		var scale = ScaleContext.new(
 			json_chord.key_midi_root,
 			json_chord.scale_array,
-			json_chord.get("key_alterations", {}),
+			alterations,
 			json_chord.get("key_scale_name", "unknown")
 		)
 
@@ -73,13 +80,18 @@ func to_json_array(progression):
 	var result = []
 
 	for chord in progression.chords:
+		# Convert integer alteration keys back to strings for JSON
+		var json_alterations = {}
+		for key in chord.scale_context.alterations.keys():
+			json_alterations[str(key)] = chord.scale_context.alterations[key]
+
 		var json_chord = {
 			"index": chord.id,
 			"pos": chord.start_time,
 			"length_beats": chord.duration,
 			"key_midi_root": chord.scale_context.root,
 			"scale_array": chord.scale_context.steps.duplicate(),
-			"key_alterations": chord.scale_context.alterations.duplicate(),
+			"key_alterations": json_alterations,
 			"key_scale_name": chord.scale_context.scale_name,
 			"kind": chord.kind
 		}
