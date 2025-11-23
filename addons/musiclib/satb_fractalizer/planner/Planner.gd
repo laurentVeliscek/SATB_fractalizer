@@ -81,19 +81,19 @@ func _get_pattern_voice(window_index, pattern):
 		return Constants.VOICE_SOPRANO
 
 	var idx = window_index % pattern_length
-	var char = pattern[idx]
+	var voice_char = pattern[idx]
 
 	# Map character to voice ID
-	if char == "S":
+	if voice_char == "S":
 		return Constants.VOICE_SOPRANO
-	elif char == "A":
+	elif voice_char == "A":
 		return Constants.VOICE_ALTO
-	elif char == "T":
+	elif voice_char == "T":
 		return Constants.VOICE_TENOR
-	elif char == "B":
+	elif voice_char == "B":
 		return Constants.VOICE_BASS
 	else:
-		LogBus.warn(TAG, "_get_pattern_voice: unknown voice char '" + char + "', using S")
+		LogBus.warn(TAG, "_get_pattern_voice: unknown voice char '" + voice_char + "', using S")
 		return Constants.VOICE_SOPRANO
 
 # =============================================================================
