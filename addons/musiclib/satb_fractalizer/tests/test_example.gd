@@ -11,10 +11,10 @@ func run():
 	LogBus.info(TAG, "===== SATB Fractalizer Test =====")
 	LogBus.set_verbose(true)
 
-	# Load test chords
-	var test_chords = _create_test_chords()
+	# Load test chords from chords.json
+	var test_chords = _load_chords_from_file()
 
-	# Configure planner
+	# Configure planner - First pass
 	var planner = Planner.new()
 	var params = {
 		"time_num": 4,
@@ -22,23 +22,86 @@ func run():
 		"grid_unit": 0.25,
 		"time_windows": [
 			{"start": 0.0, "end": 4.0},
-			{"start": 4.0, "end": 8.0}
+			{"start": 4.0, "end": 8.0},
+			{"start": 8.0, "end": 12.0}
 		],
-		"allowed_techniques": ["passing_tone", "neighbor_tone"],
-		"voice_window_pattern": "SA",
-		"triplet_allowed": false
+		"allowed_techniques": ["passing_tone", "neighbor_tone", "appoggiatura"],
+		"voice_window_pattern": "SATB",
+		"triplet_allowed": false,
+		"rng_seed": 42
 	}
 
-	# Apply fractalizer
+	# Apply fractalizer - First pass
+	LogBus.info(TAG, "\n===== FIRST PASS =====")
 	var result = planner.apply(test_chords, params)
 
-	# Display result
-	LogBus.info(TAG, "===== Result =====")
+	# Display first pass result
+	LogBus.info(TAG, "\n===== First Pass Result =====")
 	LogBus.info(TAG, "Original chords: " + str(test_chords.size()))
-	LogBus.info(TAG, "Result chords: " + str(result.size()))
-	LogBus.info(TAG, "Result: " + JSON.print(result, "\t"))
+	LogBus.info(TAG, "Result chords: " + str(result.chords.size()))
+	LogBus.info(TAG, "Result (first 3 chords): " + JSON.print(result.chords.slice(0, 2), "\t"))
+	LogBus.info(TAG, "\n--- Progression Metadata ---")
+	LogBus.info(TAG, "Generation depth: " + str(result.metadata.get("generation_depth", 0)))
+	LogBus.info(TAG, "RNG seed: " + str(result.metadata.get("rng_seed", "N/A")))
+	LogBus.info(TAG, "History entries: " + str(result.metadata.history.size()))
+	LogBus.info(TAG, "Time windows processed: " + str(result.metadata.technique_report.time_windows.size()))
 
-	LogBus.info(TAG, "===== Test Complete =====")
+	# Re-inject result into planner for second pass
+	LogBus.info(TAG, "\n===== SECOND PASS (RE-INJECTION) =====")
+	var planner2 = Planner.new()
+	var params2 = {
+		"time_num": 4,
+		"time_den": 4,
+		"grid_unit": 0.125,
+		"time_windows": [
+			{"start": 0.0, "end": 2.0},
+			{"start": 2.0, "end": 4.0}
+		],
+		"allowed_techniques": ["passing_tone", "neighbor_tone"],
+		"voice_window_pattern": "SATB",
+		"triplet_allowed": false,
+		"rng_seed": 42
+	}
+
+	var result2 = planner2.apply(result.chords, params2)
+
+	# Display second pass result
+	LogBus.info(TAG, "\n===== Second Pass Result =====")
+	LogBus.info(TAG, "First pass chords: " + str(result.chords.size()))
+	LogBus.info(TAG, "Second pass chords: " + str(result2.chords.size()))
+	LogBus.info(TAG, "Result2 (first 3 chords): " + JSON.print(result2.chords.slice(0, 2), "\t"))
+	LogBus.info(TAG, "\n--- Second Pass Metadata ---")
+	LogBus.info(TAG, "Generation depth: " + str(result2.metadata.get("generation_depth", 0)))
+	LogBus.info(TAG, "History entries: " + str(result2.metadata.history.size()))
+	LogBus.info(TAG, "Time windows processed: " + str(result2.metadata.technique_report.time_windows.size()))
+
+	LogBus.info(TAG, "\n===== Test Complete =====")
+
+func _load_chords_from_file():
+	# Load chords from chords.json file
+	var file = File.new()
+	var path = "res://chords.json"
+
+	if not file.file_exists(path):
+		LogBus.error(TAG, "chords.json not found at " + path)
+		return _create_test_chords()
+
+	var error = file.open(path, File.READ)
+	if error != OK:
+		LogBus.error(TAG, "Failed to open chords.json: " + str(error))
+		return _create_test_chords()
+
+	var content = file.get_as_text()
+	file.close()
+
+	var parse_result = JSON.parse(content)
+	if parse_result.error != OK:
+		LogBus.error(TAG, "Failed to parse chords.json: " + parse_result.error_string)
+		return _create_test_chords()
+
+	var chords = parse_result.result
+	LogBus.info(TAG, "Loaded " + str(chords.size()) + " chords from chords.json")
+	return chords
 
 func _create_test_chords():
 	# Create a simple 4-chord progression in C major

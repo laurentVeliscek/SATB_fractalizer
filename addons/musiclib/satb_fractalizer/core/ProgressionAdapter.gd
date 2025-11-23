@@ -94,6 +94,21 @@ func to_json_array(progression):
 				LogBus.error(TAG, "to_json_array: missing voice " + voice_id + " in chord " + str(chord.id))
 				return null
 
+		# Add chord metadata if present
+		if chord.metadata and not chord.metadata.empty():
+			json_chord["chord_metadata"] = chord.metadata.duplicate(true)
+
+		# Add voice metadata if present
+		var voices_metadata = {}
+		for voice_id in Constants.VOICES:
+			if chord.voices.has(voice_id):
+				var voice = chord.voices[voice_id]
+				if voice.metadata and not voice.metadata.empty():
+					voices_metadata[voice_id] = voice.metadata.duplicate(true)
+
+		if not voices_metadata.empty():
+			json_chord["voices_metadata"] = voices_metadata
+
 		result.append(json_chord)
 
 	LogBus.info(TAG, "Conversion complete: " + str(result.size()) + " chords")
