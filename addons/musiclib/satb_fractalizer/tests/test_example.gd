@@ -4,7 +4,8 @@ extends Node
 # This demonstrates how to use the system
 
 const TAG = "TestExample"
-const Planner = preload("res://addons/musiclib/satb_fractalizer/planner/Planner.gd")
+
+var Planner = load("res://addons/musiclib/satb_fractalizer/planner/Planner.gd")
 
 func run():
 	LogBus.info(TAG, "===== SATB Fractalizer Test =====")

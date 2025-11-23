@@ -61,10 +61,10 @@ func set_voice_pitch(voice_id, new_pitch):
 # DUPLICATION
 # =============================================================================
 
-func duplicate():
+func copy():
 	var new_voices = {}
 	for voice_id in voices:
-		new_voices[voice_id] = voices[voice_id].duplicate()
+		new_voices[voice_id] = voices[voice_id].copy()
 
 	var new_chord = get_script().new(
 		id,

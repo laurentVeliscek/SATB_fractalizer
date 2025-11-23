@@ -1,6 +1,6 @@
 extends Node
 
-const TAG = "TechniqueBase"
+const TAG2 = "TechniqueBase"
 const Constants = preload("res://addons/musiclib/satb_fractalizer/core/Constants.gd")
 const Voice = preload("res://addons/musiclib/satb_fractalizer/core/Voice.gd")
 const Chord = preload("res://addons/musiclib/satb_fractalizer/core/Chord.gd")
@@ -12,7 +12,7 @@ const RhythmPattern = preload("res://addons/musiclib/satb_fractalizer/planner/Rh
 # =============================================================================
 
 func apply(progression, params):
-	LogBus.error(TAG, "apply() must be overridden in subclass")
+	LogBus.error(TAG2, "apply() must be overridden in subclass")
 	return progression
 
 # =============================================================================
@@ -26,7 +26,7 @@ func _select_chord_pair(progression, window, strategy):
 	var pairs = progression.get_chord_pairs_in_window(window.start, window.end)
 
 	if pairs.empty():
-		LogBus.warn(TAG, "_select_chord_pair: no chord pairs in window [" + str(window.start) + ", " + str(window.end) + "]")
+		LogBus.warn(TAG2, "_select_chord_pair: no chord pairs in window [" + str(window.start) + ", " + str(window.end) + "]")
 		return null
 
 	var selected = progression.select_chord_pair(pairs, strategy)
@@ -55,9 +55,11 @@ func _choose_rhythm_pattern(n_cells, progression, technique_id, triplet_allowed)
 # UTILITY: CREATE NEW CHORDS FROM PATTERN
 # =============================================================================
 
-func _create_chords_from_pattern(chord_a, chord_b, pattern, voice_id, pitches, technique_id, role):
+func _create_chords_from_pattern(chord_a, chord_b, pattern, voice_id, pitches, technique_id, role, time_grid, generation_depth):
 	# pattern: {"pattern": [durations...], "triplet": bool}
 	# pitches: Array of MIDI pitches (same length as pattern.pattern)
+	# time_grid: TimeGrid for beat strength calculation
+	# generation_depth: int, how many fractalizer passes have been applied
 	# Returns: Array of Chord objects
 
 	var new_chords = []
@@ -71,7 +73,7 @@ func _create_chords_from_pattern(chord_a, chord_b, pattern, voice_id, pitches, t
 		# Create new voices (copy from chord_a, modify target voice)
 		var new_voices = {}
 		for v in Constants.VOICES:
-			new_voices[v] = chord_a.voices[v].duplicate()
+			new_voices[v] = chord_a.voices[v].copy()
 
 		# Modify target voice
 		new_voices[voice_id].pitch = pitch
@@ -88,6 +90,20 @@ func _create_chords_from_pattern(chord_a, chord_b, pattern, voice_id, pitches, t
 			else:
 				new_voices[voice_id].direction = Constants.DIRECTION_STATIC
 
+		# Enrich voice metadata
+		var beat_strength = time_grid.get_beat_strength(current_time) if time_grid else Constants.BEAT_WEAK
+		var scale_degree = chord_a.scale_context.get_scale_degree(pitch) if chord_a.scale_context else -1
+
+		new_voices[voice_id].metadata = {
+			"beat_strength": beat_strength,
+			"scale_degree": scale_degree,
+			"generated_at_time": current_time,
+			"from_chord": chord_a.id,
+			"to_chord": chord_b.id,
+			"pattern_index": i,
+			"pattern_total": durations.size()
+		}
+
 		# Create new chord
 		var new_chord = Chord.new(
 			-1,  # ID will be reassigned later
@@ -98,6 +114,17 @@ func _create_chords_from_pattern(chord_a, chord_b, pattern, voice_id, pitches, t
 			"decorative"  # kind
 		)
 		new_chord.techniques_applied.append(technique_id)
+
+		# Enrich chord metadata
+		new_chord.metadata = {
+			"generated_by": technique_id,
+			"generation_depth": generation_depth,
+			"comments": technique_id + " in " + voice_id + " between chord " + str(chord_a.id) + " and " + str(chord_b.id),
+			"source_chord_a": chord_a.id,
+			"source_chord_b": chord_b.id,
+			"modified_voice": voice_id,
+			"triplet": pattern.get("triplet", false)
+		}
 
 		new_chords.append(new_chord)
 		current_time += dur
@@ -115,7 +142,7 @@ func _validate_permissions(progression, voice_id, chord_indices):
 	if progression.voice_policy.has(voice_id):
 		var policy = progression.voice_policy[voice_id]
 		if policy.has("modifiable") and not policy.modifiable:
-			LogBus.warn(TAG, "_validate_permissions: voice " + voice_id + " is not modifiable")
+			LogBus.warn(TAG2, "_validate_permissions: voice " + voice_id + " is not modifiable")
 			return false
 
 	# Check if voices are locked in the chords
@@ -123,7 +150,7 @@ func _validate_permissions(progression, voice_id, chord_indices):
 		var chord = progression.get_chord_at_index(idx)
 		if chord and chord.voices.has(voice_id):
 			if chord.voices[voice_id].locked:
-				LogBus.warn(TAG, "_validate_permissions: voice " + voice_id + " is locked in chord " + str(idx))
+				LogBus.warn(TAG2, "_validate_permissions: voice " + voice_id + " is locked in chord " + str(idx))
 				return false
 
 	return true
@@ -144,7 +171,7 @@ func _validate_nct_pitches(progression, new_chords, voice_id, original_pitch):
 		# Validate range
 		var range_check = VoiceLeading.validate_range(voice_id, new_pitch, original_pitch, adjacent)
 		if not range_check.valid:
-			LogBus.warn(TAG, "_validate_nct_pitches: " + range_check.reason)
+			LogBus.warn(TAG2, "_validate_nct_pitches: " + range_check.reason)
 			return false
 
 		# Validate voice crossing
@@ -155,7 +182,7 @@ func _validate_nct_pitches(progression, new_chords, voice_id, original_pitch):
 
 		var crossing_check = VoiceLeading.check_voice_crossing(s, a, t, b)
 		if not crossing_check.valid:
-			LogBus.warn(TAG, "_validate_nct_pitches: " + crossing_check.reason)
+			LogBus.warn(TAG2, "_validate_nct_pitches: " + crossing_check.reason)
 			return false
 
 	return true

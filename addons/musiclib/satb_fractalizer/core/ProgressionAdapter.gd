@@ -2,11 +2,12 @@ extends Node
 
 const TAG = "ProgressionAdapter"
 const Constants = preload("res://addons/musiclib/satb_fractalizer/core/Constants.gd")
-const ScaleContext = preload("res://addons/musiclib/satb_fractalizer/core/ScaleContext.gd")
-const Voice = preload("res://addons/musiclib/satb_fractalizer/core/Voice.gd")
-const Chord = preload("res://addons/musiclib/satb_fractalizer/core/Chord.gd")
-const TimeGrid = preload("res://addons/musiclib/satb_fractalizer/core/TimeGrid.gd")
-const Progression = preload("res://addons/musiclib/satb_fractalizer/core/Progression.gd")
+
+var ScaleContext = load("res://addons/musiclib/satb_fractalizer/core/ScaleContext.gd")
+var Voice = load("res://addons/musiclib/satb_fractalizer/core/Voice.gd")
+var Chord = load("res://addons/musiclib/satb_fractalizer/core/Chord.gd")
+var TimeGrid = load("res://addons/musiclib/satb_fractalizer/core/TimeGrid.gd")
+var Progression = load("res://addons/musiclib/satb_fractalizer/core/Progression.gd")
 
 # =============================================================================
 # JSON ARRAY → PROGRESSION
