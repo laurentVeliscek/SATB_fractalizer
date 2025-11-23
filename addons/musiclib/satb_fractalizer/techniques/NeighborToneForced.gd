@@ -62,8 +62,9 @@ func apply(progression, params):
 		return progression
 
 	# 6. Choose rhythm pattern for 3-note pattern: anchor → neighbor → anchor
-	var rhythm_pattern = RhythmPattern.choose_rhythm_pattern(
+	var rhythm_pattern = _choose_rhythm_pattern(
 		n_cells,
+		progression,
 		Constants.TECHNIQUE_NEIGHBOR_TONE_FORCED,
 		triplet_allowed
 	)
@@ -75,7 +76,7 @@ func apply(progression, params):
 	# Force 3-note pattern if the chosen pattern has different count
 	if rhythm_pattern.pattern.size() != 3:
 		# Create a simple 3-note equal pattern
-		var cell_per_note = n_cells / 3
+		var cell_per_note = n_cells / 3.0
 		rhythm_pattern = {
 			"pattern": [cell_per_note, cell_per_note, cell_per_note],
 			"triplet": false
