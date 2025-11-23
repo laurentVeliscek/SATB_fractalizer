@@ -178,11 +178,11 @@ func insert_chords_between(from_index, to_index, new_chords):
 # DUPLICATION
 # =============================================================================
 
-func duplicate():
+func copy():
 	var new_prog = get_script().new()
 
 	for chord in chords:
-		new_prog.add_chord(chord.duplicate())
+		new_prog.add_chord(chord.copy())
 
 	new_prog.time_grid = time_grid  # Shared (not duplicated)
 	new_prog.global_scale = global_scale  # Shared (not duplicated)

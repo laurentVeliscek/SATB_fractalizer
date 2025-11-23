@@ -2,10 +2,11 @@ extends Node
 
 const TAG = "Planner"
 const Constants = preload("res://addons/musiclib/satb_fractalizer/core/Constants.gd")
-const ProgressionAdapter = preload("res://addons/musiclib/satb_fractalizer/core/ProgressionAdapter.gd")
-const PassingTone = preload("res://addons/musiclib/satb_fractalizer/techniques/PassingTone.gd")
-const NeighborTone = preload("res://addons/musiclib/satb_fractalizer/techniques/NeighborTone.gd")
-const Appoggiatura = preload("res://addons/musiclib/satb_fractalizer/techniques/Appoggiatura.gd")
+
+var ProgressionAdapter = load("res://addons/musiclib/satb_fractalizer/core/ProgressionAdapter.gd")
+var PassingTone = load("res://addons/musiclib/satb_fractalizer/techniques/PassingTone.gd")
+var NeighborTone = load("res://addons/musiclib/satb_fractalizer/techniques/NeighborTone.gd")
+var Appoggiatura = load("res://addons/musiclib/satb_fractalizer/techniques/Appoggiatura.gd")
 
 # =============================================================================
 # MAIN ENTRY POINT

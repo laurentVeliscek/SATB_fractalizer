@@ -26,7 +26,7 @@ func _init(p, r, t, d, l, m):
 # DUPLICATION
 # =============================================================================
 
-func duplicate():
+func copy():
 	var new_voice = get_script().new(
 		pitch,
 		role,

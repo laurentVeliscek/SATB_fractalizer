@@ -71,7 +71,7 @@ func _create_chords_from_pattern(chord_a, chord_b, pattern, voice_id, pitches, t
 		# Create new voices (copy from chord_a, modify target voice)
 		var new_voices = {}
 		for v in Constants.VOICES:
-			new_voices[v] = chord_a.voices[v].duplicate()
+			new_voices[v] = chord_a.voices[v].copy()
 
 		# Modify target voice
 		new_voices[voice_id].pitch = pitch
