@@ -39,6 +39,8 @@ func from_json_array(chords_array, time_num, time_den, grid_unit):
 
 		# Build Voices
 		var voices = {}
+		var json_voices_metadata = json_chord.get("voices_metadata", {})
+
 		for voice_id in Constants.VOICES:
 			var json_voice_name = Constants.VOICE_TO_JSON[voice_id]
 
@@ -46,13 +48,18 @@ func from_json_array(chords_array, time_num, time_den, grid_unit):
 				LogBus.error(TAG, "from_json_array: missing voice " + json_voice_name + " in chord " + str(i))
 				return null
 
+			# Get voice metadata if present
+			var voice_metadata = {}
+			if json_voices_metadata.has(voice_id):
+				voice_metadata = json_voices_metadata[voice_id].duplicate(true)
+
 			voices[voice_id] = Voice.new(
 				json_chord[json_voice_name],  # pitch
 				Constants.ROLE_CHORD_TONE,
 				null,  # technique
 				Constants.DIRECTION_STATIC,
 				false,  # locked
-				{}  # metadata
+				voice_metadata
 			)
 
 		# Build Chord
@@ -64,6 +71,10 @@ func from_json_array(chords_array, time_num, time_den, grid_unit):
 			scale,
 			json_chord.get("kind", "diatonic")
 		)
+
+		# Restore chord metadata if present
+		if json_chord.has("chord_metadata"):
+			chord.metadata = json_chord["chord_metadata"].duplicate(true)
 
 		prog.add_chord(chord)
 
