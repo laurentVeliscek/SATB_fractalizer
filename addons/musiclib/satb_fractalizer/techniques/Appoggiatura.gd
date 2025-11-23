@@ -46,7 +46,8 @@ func apply(progression, params):
 	# The appoggiatura note is a neighbor of to_pitch
 
 	# 4. Calculate appoggiatura pitch (neighbor of resolution note)
-	var scale = chord_a.scale_context
+	# Use chord_b's scale context since to_pitch comes from chord_b
+	var scale = chord_b.scale_context
 	var appoggiatura_pitch = scale.get_neighbor_pitches(to_pitch, direction)
 
 	if appoggiatura_pitch == null:
