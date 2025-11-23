@@ -29,7 +29,7 @@ func _build_real_scale():
 	var result = []
 
 	for i in range(steps.size()):
-		var step = steps[i]
+		var step = int(steps[i])  # Force int (JSON parsing may create floats)
 		var degree = i  # 0-based degree (0=tonic, 1=2nd, etc.)
 
 		# Check if this degree has an alteration
@@ -49,7 +49,13 @@ func is_diatonic(pitch):
 	var root_class = int(root) % 12
 	var relative_pitch = (pitch_class - root_class + 12) % 12
 
-	return real_scale.has(relative_pitch)
+	var result = real_scale.has(relative_pitch)
+
+	# Debug logging
+	if not result:
+		LogBus.warn(TAG, "is_diatonic FALSE: pitch=" + str(pitch) + " pitch_class=" + str(pitch_class) + " root=" + str(root) + " root_class=" + str(root_class) + " relative_pitch=" + str(relative_pitch) + " real_scale=" + str(real_scale))
+
+	return result
 
 func get_scale_degree(pitch):
 	var pitch_class = pitch % 12

@@ -46,6 +46,7 @@ func apply(progression, params):
 	# The appoggiatura note is a neighbor of to_pitch
 
 	# 4. Calculate appoggiatura pitch (neighbor of resolution note)
+	# NCT always uses the previous chord's scale context
 	var scale = chord_a.scale_context
 	var appoggiatura_pitch = scale.get_neighbor_pitches(to_pitch, direction)
 

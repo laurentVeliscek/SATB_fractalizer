@@ -45,6 +45,7 @@ func apply(progression, params):
 		return progression
 
 	# 4. Calculate passing pitches using scale context
+	# NCT always uses the previous chord's scale context
 	var scale = chord_a.scale_context
 	var passing_pitches = scale.get_passing_pitches(from_pitch, to_pitch)
 
