@@ -65,24 +65,18 @@ func apply(progression, params):
 	var span = pair_info.effective_end - pair_info.effective_start
 	var n_cells = progression.time_grid.time_to_cells(span)
 
-	if n_cells < 2:
-		LogBus.warn(TAG, "Not enough cells for chromatic passing tone (need at least 2, got " + str(n_cells) + ")")
+	if n_cells < 1:
+		LogBus.warn(TAG, "Not enough cells for chromatic passing tone (need at least 1, got " + str(n_cells) + ")")
 		return progression
 
-	# 7. Choose rhythm pattern for 2-note pattern: from_pitch → chromatic → to_pitch
-	# But we only insert the chromatic note, so it's a 1-note insertion
-	var rhythm_pattern = _choose_rhythm_pattern(
-		n_cells,
-		progression,
-		Constants.TECHNIQUE_CHROMATIC_PASSING_TONE,
-		triplet_allowed
-	)
+	# 7. Create rhythm pattern with exactly 1 duration (we insert 1 chromatic note)
+	# The chromatic note extends from chord_a to chord_b
+	var rhythm_pattern = {
+		"pattern": [n_cells * progression.time_grid.grid_unit],
+		"triplet": false
+	}
 
-	if not rhythm_pattern:
-		LogBus.warn(TAG, "No suitable rhythm pattern found for n_cells=" + str(n_cells))
-		return progression
-
-	# 8. Create pitches array: from_pitch → chromatic_pitch (we insert only the chromatic note)
+	# 8. Create pitches array: just the chromatic pitch
 	var pitches = [chromatic_pitch]
 
 	# 9. Create chords from pattern
