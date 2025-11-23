@@ -2,7 +2,7 @@ extends Node
 
 const TAG = "ScaleContext"
 
-var root               # int (MIDI pitch, e.g., 60 = C4)
+var root:int              # int (MIDI pitch, e.g., 60 = C4)
 var steps              # Array [0, 2, 4, 5, 7, 9, 11] for major
 var alterations        # Dictionary {degree: alteration} e.g., {4: 1} for #4
 var scale_name         # String "major", "minor", "harmonic_minor", etc.
@@ -57,7 +57,7 @@ func is_diatonic(pitch):
 
 	return result
 
-func get_scale_degree(pitch):
+func get_scale_degree(pitch:int):
 	var pitch_class = pitch % 12
 	var root_class = root % 12
 	var relative_pitch = (pitch_class - root_class + 12) % 12
@@ -72,7 +72,7 @@ func get_scale_degree(pitch):
 # NEIGHBOR PITCHES
 # =============================================================================
 
-func get_neighbor_pitches(anchor_pitch, direction):
+func get_neighbor_pitches(anchor_pitch:int, direction):
 	# Returns the diatonic neighbor pitch (upper or lower)
 	# direction: "upper" or "lower"
 
