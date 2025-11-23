@@ -45,11 +45,18 @@ func apply(chords_array, params):
 		LogBus.error(TAG, "Failed to convert JSON to Progression")
 		return chords_array
 
-	# Initialize metadata
+	# Initialize metadata with global parameters (stored once, not repeated per window)
 	progression.metadata["generation_depth"] = 0
 	progression.metadata["rng_seed"] = rng_seed
-	progression.metadata["voice_window_pattern"] = voice_pattern
-	progression.metadata["triplet_allowed"] = triplet_allowed
+	progression.metadata["global_params"] = {
+		"time_num": time_num,
+		"time_den": time_den,
+		"grid_unit": grid_unit,
+		"voice_window_pattern": voice_pattern,
+		"triplet_allowed": triplet_allowed,
+		"pair_selection_strategy": pair_strategy,
+		"allowed_techniques": allowed_techniques.duplicate()
+	}
 
 	LogBus.info(TAG, "Converted to Progression: " + str(progression.get_chord_count()) + " chords")
 
@@ -177,12 +184,13 @@ func _process_window(progression, window, window_index, voice_id, allowed_techni
 		if not technique_params.has(key):
 			technique_params[key] = global_params[key]
 
-	# Record in history (before applying)
+	# Record in history (before applying) - only window-specific data
 	var history_entry = {
 		"op": "apply_" + chosen_technique,
-		"params": technique_params.duplicate(),
 		"window_index": window_index,
-		"timestamp": OS.get_datetime(),
+		"window_start": window.start,
+		"window_end": window.end,
+		"voice": voice_id,
 		"status": "pending"
 	}
 
