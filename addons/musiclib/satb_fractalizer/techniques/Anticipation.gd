@@ -10,91 +10,103 @@ const TAG = "Anticipation"
 # The anticipated pitch then continues into the next chord
 # =============================================================================
 
-func get_id():
-	return Constants.TECHNIQUE_ANTICIPATION
+func apply(progression, params):
+	LogBus.info(TAG, "Applying anticipation technique")
 
-func applies(chord_a, chord_b, voice_id, progression):
+	# Extract params
+	var window = params.get("time_window", {"start": 0.0, "end": 2.0})
+	var voice_id = params.get("voice", Constants.VOICE_SOPRANO)
+	var strategy = params.get("pair_selection_strategy", Constants.STRATEGY_EARLIEST)
+	var triplet_allowed = params.get("triplet_allowed", Constants.DEFAULT_TRIPLET_ALLOWED)
+
+	# 1. Select chord pair
+	var pair_info = _select_chord_pair(progression, window, strategy)
+	if not pair_info:
+		LogBus.warn(TAG, "No chord pair found in window")
+		return progression
+
+	var from_idx = pair_info.from_index
+	var to_idx = pair_info.to_index
+
+	# 2. Validate permissions
+	if not _validate_permissions(progression, voice_id, [from_idx, to_idx]):
+		LogBus.warn(TAG, "Voice " + voice_id + " not modifiable")
+		return progression
+
+	var chord_a = progression.get_chord_at_index(from_idx)
+	var chord_b = progression.get_chord_at_index(to_idx)
+
+	# 3. Get pitches
 	var from_pitch = chord_a.get_voice_pitch(voice_id)
 	var to_pitch = chord_b.get_voice_pitch(voice_id)
-
-	if from_pitch == null or to_pitch == null:
-		return false
 
 	# Anticipation requires different pitches
 	if from_pitch == to_pitch:
-		return false
-
-	# Need at least 2 cells for anticipation
-	var n_cells = _get_n_cells(chord_a, chord_b, progression)
-	if n_cells < 2:
-		return false
+		LogBus.warn(TAG, "Anticipation requires different pitches (from=" + str(from_pitch) + ", to=" + str(to_pitch) + ")")
+		return progression
 
 	# The anticipated note (to_pitch) should be diatonic in the NEXT chord's scale
 	if not chord_b.scale_context.is_diatonic(to_pitch):
-		return false
+		LogBus.warn(TAG, "Anticipated pitch " + str(to_pitch) + " is not diatonic in next chord scale")
+		return progression
 
-	return true
+	LogBus.debug(TAG, "Anticipation: " + str(from_pitch) + " → " + str(to_pitch) + " (early)")
 
-func apply(chord_a, chord_b, voice_id, progression, params):
-	LogBus.info(TAG, "Applying anticipation technique")
+	# 4. Compute span and rhythm pattern
+	var span = pair_info.effective_end - pair_info.effective_start
+	var n_cells = progression.time_grid.time_to_cells(span)
 
-	var from_pitch = chord_a.get_voice_pitch(voice_id)
-	var to_pitch = chord_b.get_voice_pitch(voice_id)
+	if n_cells < 2:
+		LogBus.warn(TAG, "Span too small for anticipation (n_cells=" + str(n_cells) + ")")
+		return progression
 
-	# The anticipation is simply the to_pitch played early
-	# We insert one chord with to_pitch before chord_b
-	var anticipation_pitch = to_pitch
+	var pattern = _choose_rhythm_pattern(n_cells, progression, Constants.TECHNIQUE_ANTICIPATION, triplet_allowed)
+	if not pattern:
+		LogBus.warn(TAG, "No rhythm pattern found for n_cells=" + str(n_cells))
+		return progression
 
-	LogBus.debug(TAG, "Anticipation: " + str(from_pitch) + " → " + str(anticipation_pitch) + " (early)")
+	# 5. Build 2-note pattern: long from_pitch, short to_pitch (anticipation)
+	var note_count = pattern.pattern.size()
+	var pitches = []
 
-	# Choose rhythm pattern for single anticipation note
-	var n_cells = _get_n_cells(chord_a, chord_b, progression)
-
-	# For anticipation, we want the anticipated note to be shorter (weak beat)
-	# Let's use a simple pattern where most of the time is on from_pitch
-	# and a short anticipation at the end
-	var triplet_allowed = params.get("triplet_allowed", false)
-	var rhythm_pattern = _choose_rhythm_pattern(
-		n_cells,
-		progression,
-		Constants.TECHNIQUE_ANTICIPATION,
-		triplet_allowed
-	)
-
-	# We want a 2-note pattern: long from_pitch, short to_pitch (anticipation)
-	if rhythm_pattern.pattern.size() != 2:
-		# Create a pattern favoring the first note
-		var anticipation_ratio = 0.25  # Anticipation is 1/4 of total duration
-		var from_duration = n_cells * (1.0 - anticipation_ratio)
-		var anticipation_duration = n_cells * anticipation_ratio
-		rhythm_pattern = {
+	if note_count == 2:
+		pitches = [from_pitch, to_pitch]
+	else:
+		# Force 2-note pattern favoring first note (75% / 25%)
+		var anticipation_ratio = 0.25
+		var from_duration = n_cells * (1.0 - anticipation_ratio) * progression.time_grid.grid_unit
+		var anticipation_duration = n_cells * anticipation_ratio * progression.time_grid.grid_unit
+		pattern = {
 			"pattern": [from_duration, anticipation_duration],
 			"triplet": false
 		}
+		pitches = [from_pitch, to_pitch]
 
-	var pitches = [from_pitch, anticipation_pitch]
-
-	# Validate NCT pitches
-	if not _validate_nct_pitches(pitches, from_pitch, to_pitch):
-		LogBus.warn(TAG, "NCT validation failed")
-		return null
-
-	# Create the new chords
+	# 6. Create new chords
+	var generation_depth = progression.metadata.get("generation_depth", 0) + 1
 	var new_chords = _create_chords_from_pattern(
 		chord_a,
 		chord_b,
+		pattern,
 		voice_id,
 		pitches,
-		rhythm_pattern,
-		progression,
-		Constants.ROLE_ANTICIPATION,
 		Constants.TECHNIQUE_ANTICIPATION,
-		"anticipation in " + voice_id + " between chord " + str(chord_a.id) + " and " + str(chord_b.id)
+		Constants.ROLE_ANTICIPATION,
+		progression.time_grid,
+		generation_depth
 	)
 
-	if new_chords == null or new_chords.empty():
-		LogBus.warn(TAG, "Failed to create chords")
-		return null
+	# 7. Validate NCT pitches
+	if not _validate_nct_pitches(progression, new_chords, voice_id, from_pitch):
+		LogBus.warn(TAG, "NCT validation failed")
+		return progression
 
+	# 8. Insert new chords
+	if not progression.insert_chords_between(from_idx, to_idx, new_chords):
+		LogBus.error(TAG, "Failed to insert chords")
+		return progression
+
+	# 9. Log success
 	LogBus.info(TAG, "Successfully applied anticipation: " + str(new_chords.size()) + " chords inserted")
-	return new_chords
+
+	return progression
