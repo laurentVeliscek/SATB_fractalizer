@@ -170,6 +170,17 @@ func _score_pattern(pattern_dict, technique_id, beat_positions, grid_unit):
 		if note_count == 2 and pattern[0] > pattern[1]:
 			score += 30
 
+	elif technique_id == Constants.TECHNIQUE_PEDAL:
+		# Pedal is typically a single sustained note
+		# Prefer single-note patterns (long duration)
+		if note_count == 1:
+			score += 40
+
+	elif technique_id == Constants.TECHNIQUE_EXTENDED_PASSING_TONES:
+		# Extended passing tones: prefer equal subdivisions for smooth motion
+		if _is_equal_division(pattern):
+			score += 30
+
 	# 3. Avoid excessive syncopation
 	# (Simplified: just check if notes cross strong beats)
 	# For now, we'll skip this check (would require more context)
