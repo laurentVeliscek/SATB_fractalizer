@@ -52,7 +52,9 @@ const JSON_TO_VOICE = {
 
 const ROLE_CHORD_TONE = "chord_tone"
 const ROLE_PASSING_TONE = "passing_tone"
+const ROLE_CHROMATIC_PASSING_TONE = "chromatic_passing_tone"
 const ROLE_NEIGHBOR_TONE = "neighbor_tone"
+const ROLE_DOUBLE_NEIGHBOR = "double_neighbor"
 const ROLE_APPOGGIATURA = "appoggiatura"
 const ROLE_ESCAPE_TONE = "escape_tone"
 const ROLE_ANTICIPATION = "anticipation"
