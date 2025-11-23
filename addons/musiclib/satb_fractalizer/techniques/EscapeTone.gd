@@ -10,39 +10,48 @@ const TAG = "EscapeTone"
 # The escape note leaves by step and resolves by leap in the opposite direction
 # =============================================================================
 
-func get_id():
-	return Constants.TECHNIQUE_ESCAPE_TONE
+func apply(progression, params):
+	LogBus.info(TAG, "Applying escape_tone technique")
 
-func applies(chord_a, chord_b, voice_id, progression):
+	# Extract params
+	var window = params.get("time_window", {"start": 0.0, "end": 2.0})
+	var voice_id = params.get("voice", Constants.VOICE_SOPRANO)
+	var strategy = params.get("pair_selection_strategy", Constants.STRATEGY_EARLIEST)
+	var triplet_allowed = params.get("triplet_allowed", Constants.DEFAULT_TRIPLET_ALLOWED)
+
+	# 1. Select chord pair
+	var pair_info = _select_chord_pair(progression, window, strategy)
+	if not pair_info:
+		LogBus.warn(TAG, "No chord pair found in window")
+		return progression
+
+	var from_idx = pair_info.from_index
+	var to_idx = pair_info.to_index
+
+	# 2. Validate permissions
+	if not _validate_permissions(progression, voice_id, [from_idx, to_idx]):
+		LogBus.warn(TAG, "Voice " + voice_id + " not modifiable")
+		return progression
+
+	var chord_a = progression.get_chord_at_index(from_idx)
+	var chord_b = progression.get_chord_at_index(to_idx)
+
+	# 3. Get pitches
 	var from_pitch = chord_a.get_voice_pitch(voice_id)
 	var to_pitch = chord_b.get_voice_pitch(voice_id)
-
-	if from_pitch == null or to_pitch == null:
-		return false
 
 	# Escape tone works best when pitches are different
 	if from_pitch == to_pitch:
-		return false
+		LogBus.warn(TAG, "Escape tone requires different pitches (from=" + str(from_pitch) + ", to=" + str(to_pitch) + ")")
+		return progression
 
-	# Need at least 3 cells for 3-note pattern (step + leap)
-	var n_cells = _get_n_cells(chord_a, chord_b, progression)
-	if n_cells < 3:
-		return false
-
-	return true
-
-func apply(chord_a, chord_b, voice_id, progression, params):
-	LogBus.info(TAG, "Applying escape_tone technique")
-
-	var from_pitch = chord_a.get_voice_pitch(voice_id)
-	var to_pitch = chord_b.get_voice_pitch(voice_id)
+	# 4. Calculate escape pitch
+	# NCT always uses the previous chord's scale context
 	var scale = chord_a.scale_context
 
 	# Choose direction for the step (up or down)
-	var step_direction = "upper"
-	if params.has("escape_step_direction"):
-		step_direction = params["escape_step_direction"]
-	else:
+	var step_direction = params.get("escape_step_direction", null)
+	if step_direction == null:
 		# Random choice
 		step_direction = "upper" if (progression.rng.randi() % 2 == 0) else "lower"
 
@@ -50,61 +59,70 @@ func apply(chord_a, chord_b, voice_id, progression, params):
 	var neighbor_pitches = scale.get_neighbor_pitches(from_pitch)
 	if neighbor_pitches == null:
 		LogBus.warn(TAG, "No diatonic neighbors found for escape anchor " + str(from_pitch))
-		return null
+		return progression
 
-	var escape_pitch = neighbor_pitches["upper"] if step_direction == "upper" else neighbor_pitches["lower"]
+	var escape_pitch = neighbor_pitches[step_direction]
 	if escape_pitch == null:
 		LogBus.warn(TAG, "No " + step_direction + " neighbor found for escape anchor " + str(from_pitch))
-		return null
+		return progression
 
-	# The leap direction is opposite to step direction
-	# If we stepped up, we leap down to target (and vice versa)
-	var leap_direction = Constants.DIRECTION_DESCENDING if step_direction == "upper" else Constants.DIRECTION_ASCENDING
+	LogBus.debug(TAG, "Escape tone: " + str(from_pitch) + " → " + str(escape_pitch) + " (step " + step_direction + ") → " + str(to_pitch) + " (leap)")
 
-	# Build the 3-note pattern
-	var pitches = [from_pitch, escape_pitch, to_pitch]
+	# 5. Compute span and rhythm pattern
+	var span = pair_info.effective_end - pair_info.effective_start
+	var n_cells = progression.time_grid.time_to_cells(span)
 
-	LogBus.debug(TAG, "Escape tone: " + str(from_pitch) + " → " + str(escape_pitch) + " (step " + step_direction + ") → " + str(to_pitch) + " (leap " + leap_direction + ")")
+	if n_cells < 3:
+		LogBus.warn(TAG, "Span too small for 3-note pattern (n_cells=" + str(n_cells) + ")")
+		return progression
 
-	# Choose rhythm pattern
-	var n_cells = _get_n_cells(chord_a, chord_b, progression)
-	var triplet_allowed = params.get("triplet_allowed", false)
-	var rhythm_pattern = _choose_rhythm_pattern(
-		n_cells,
-		progression,
-		Constants.TECHNIQUE_ESCAPE_TONE,
-		triplet_allowed
-	)
+	var pattern = _choose_rhythm_pattern(n_cells, progression, Constants.TECHNIQUE_ESCAPE_TONE, triplet_allowed)
+	if not pattern:
+		LogBus.warn(TAG, "No rhythm pattern found for n_cells=" + str(n_cells))
+		return progression
 
-	# Force 3-note pattern if needed
-	if rhythm_pattern.pattern.size() != 3:
+	# 6. Build the 3-note pattern
+	var note_count = pattern.pattern.size()
+	var pitches = []
+
+	if note_count == 3:
+		pitches = [from_pitch, escape_pitch, to_pitch]
+	else:
+		# Force 3-note pattern
 		var cell_per_note = n_cells / 3.0
-		rhythm_pattern = {
-			"pattern": [cell_per_note, cell_per_note, cell_per_note],
+		pattern = {
+			"pattern": [cell_per_note * progression.time_grid.grid_unit,
+						cell_per_note * progression.time_grid.grid_unit,
+						cell_per_note * progression.time_grid.grid_unit],
 			"triplet": false
 		}
+		pitches = [from_pitch, escape_pitch, to_pitch]
 
-	# Validate NCT pitches
-	if not _validate_nct_pitches(pitches, from_pitch, to_pitch):
-		LogBus.warn(TAG, "NCT validation failed")
-		return null
-
-	# Create the new chords
+	# 7. Create new chords
+	var generation_depth = progression.metadata.get("generation_depth", 0) + 1
 	var new_chords = _create_chords_from_pattern(
 		chord_a,
 		chord_b,
+		pattern,
 		voice_id,
 		pitches,
-		rhythm_pattern,
-		progression,
-		Constants.ROLE_ESCAPE_TONE,
 		Constants.TECHNIQUE_ESCAPE_TONE,
-		"escape_tone in " + voice_id + " between chord " + str(chord_a.id) + " and " + str(chord_b.id)
+		Constants.ROLE_ESCAPE_TONE,
+		progression.time_grid,
+		generation_depth
 	)
 
-	if new_chords == null or new_chords.empty():
-		LogBus.warn(TAG, "Failed to create chords")
-		return null
+	# 8. Validate NCT pitches
+	if not _validate_nct_pitches(progression, new_chords, voice_id, from_pitch):
+		LogBus.warn(TAG, "NCT validation failed")
+		return progression
 
+	# 9. Insert new chords
+	if not progression.insert_chords_between(from_idx, to_idx, new_chords):
+		LogBus.error(TAG, "Failed to insert chords")
+		return progression
+
+	# 10. Log success
 	LogBus.info(TAG, "Successfully applied escape_tone: " + str(new_chords.size()) + " chords inserted")
-	return new_chords
+
+	return progression
