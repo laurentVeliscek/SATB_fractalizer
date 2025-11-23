@@ -45,8 +45,8 @@ func _build_real_scale():
 # =============================================================================
 
 func is_diatonic(pitch):
-	var pitch_class = pitch % 12
-	var root_class = root % 12
+	var pitch_class = int(pitch) % 12
+	var root_class = int(root) % 12
 	var relative_pitch = (pitch_class - root_class + 12) % 12
 
 	return real_scale.has(relative_pitch)
