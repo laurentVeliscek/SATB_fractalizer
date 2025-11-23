@@ -29,7 +29,7 @@ func _build_real_scale():
 	var result = []
 
 	for i in range(steps.size()):
-		var step = steps[i]
+		var step = int(steps[i])  # Force int (JSON parsing may create floats)
 		var degree = i  # 0-based degree (0=tonic, 1=2nd, etc.)
 
 		# Check if this degree has an alteration

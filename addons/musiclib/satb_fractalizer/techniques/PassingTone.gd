@@ -45,8 +45,8 @@ func apply(progression, params):
 		return progression
 
 	# 4. Calculate passing pitches using scale context
-	# Use chord_b's scale context for the destination tonality
-	var scale = chord_b.scale_context
+	# NCT always uses the previous chord's scale context
+	var scale = chord_a.scale_context
 	var passing_pitches = scale.get_passing_pitches(from_pitch, to_pitch)
 
 	if passing_pitches.empty():
