@@ -92,9 +92,12 @@ func get_neighbor_pitches(anchor_pitch, direction):
 		return null
 
 	# Calculate the target pitch
-	var octave = int(anchor_pitch / 12)
+	# We need to stay in the same octave region as anchor_pitch
+	var root_class = root % 12
+	var anchor_class = anchor_pitch % 12
+	var octave_base = anchor_pitch - anchor_class  # Base of the octave containing anchor_pitch
 	var target_step = real_scale[target_degree - 1]
-	var target_pitch = root + target_step + (octave * 12)
+	var target_pitch = octave_base + root_class + target_step
 
 	# Adjust octave if necessary
 	if direction == "upper" and target_pitch <= anchor_pitch:
