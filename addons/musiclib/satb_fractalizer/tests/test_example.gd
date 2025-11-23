@@ -13,18 +13,27 @@ func run():
 
 	# Load test chords from chords.json
 	var test_chords = _load_chords_from_file()
-
+	
+	# generation des time_windows
+	var begin_pos = test_chords[0]["pos"]
+	var end_pos = test_chords[-1]["pos"]+test_chords[-1]["length_beats"]
+	var window_length = 4.0
+	var number_of_windows = int((end_pos - begin_pos) / window_length)
+	
+	var generated_time_windows = []
+	for i in range(0,number_of_windows):
+		generated_time_windows.append( {"start": begin_pos + (window_length * i), "end": begin_pos + (window_length * (i+1))})
+		
+	LogBus.debug(TAG,"generated_time_windows: "+ str(generated_time_windows))
+	
+	
 	# Configure planner - First pass
 	var planner = Planner.new()
 	var params = {
 		"time_num": 4,
 		"time_den": 4,
 		"grid_unit": 0.25,
-		"time_windows": [
-			{"start": 0.0, "end": 4.0},
-			{"start": 4.0, "end": 8.0},
-			{"start": 8.0, "end": 12.0}
-		],
+		"time_windows": generated_time_windows,
 		"allowed_techniques": ["passing_tone", "neighbor_tone", "appoggiatura"],
 		"voice_window_pattern": "SATB",
 		"triplet_allowed": false,
@@ -53,10 +62,7 @@ func run():
 		"time_num": 4,
 		"time_den": 4,
 		"grid_unit": 0.125,
-		"time_windows": [
-			{"start": 0.0, "end": 2.0},
-			{"start": 2.0, "end": 4.0}
-		],
+		"time_windows": generated_time_windows,
 		"allowed_techniques": ["passing_tone", "neighbor_tone"],
 		"voice_window_pattern": "SATB",
 		"triplet_allowed": false,
@@ -76,6 +82,11 @@ func run():
 	LogBus.info(TAG, "Time windows processed: " + str(result2.metadata.technique_report.time_windows.size()))
 
 	LogBus.info(TAG, "\n===== Test Complete =====")
+	
+	LogBus.info(TAG, "\n===== RESULT FULL =====")
+	LogBus.info(TAG, "\n\nResult (full): " + JSON.print(result, "\t"))
+	LogBus.info(TAG, "\n\n===== RESULT2 FULL =====")
+	LogBus.info(TAG, "\n\nResult2 (full): " + JSON.print(result2, "\t"))
 
 func _load_chords_from_file():
 	# Load chords from chords.json file
