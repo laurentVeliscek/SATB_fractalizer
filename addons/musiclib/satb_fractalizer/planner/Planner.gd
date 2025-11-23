@@ -6,6 +6,7 @@ const Constants = preload("res://addons/musiclib/satb_fractalizer/core/Constants
 var ProgressionAdapter = load("res://addons/musiclib/satb_fractalizer/core/ProgressionAdapter.gd")
 var PassingTone = load("res://addons/musiclib/satb_fractalizer/techniques/PassingTone.gd")
 var NeighborTone = load("res://addons/musiclib/satb_fractalizer/techniques/NeighborTone.gd")
+var NeighborToneForced = load("res://addons/musiclib/satb_fractalizer/techniques/NeighborToneForced.gd")
 var Appoggiatura = load("res://addons/musiclib/satb_fractalizer/techniques/Appoggiatura.gd")
 
 # =============================================================================
@@ -255,6 +256,8 @@ func _create_technique_instance(technique_id):
 		return PassingTone.new()
 	elif technique_id == Constants.TECHNIQUE_NEIGHBOR_TONE:
 		return NeighborTone.new()
+	elif technique_id == Constants.TECHNIQUE_NEIGHBOR_TONE_FORCED:
+		return NeighborToneForced.new()
 	elif technique_id == Constants.TECHNIQUE_APPOGGIATURA:
 		return Appoggiatura.new()
 	else:

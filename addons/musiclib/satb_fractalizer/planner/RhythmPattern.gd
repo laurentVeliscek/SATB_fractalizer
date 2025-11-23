@@ -140,6 +140,11 @@ func _score_pattern(pattern_dict, technique_id, beat_positions, grid_unit):
 		if _is_equal_division(pattern):
 			score += 20
 
+	elif technique_id == Constants.TECHNIQUE_NEIGHBOR_TONE_FORCED:
+		# Same scoring as neighbor_tone (3-note pattern: anchor → neighbor → anchor)
+		if _is_equal_division(pattern):
+			score += 20
+
 	# 3. Avoid excessive syncopation
 	# (Simplified: just check if notes cross strong beats)
 	# For now, we'll skip this check (would require more context)
