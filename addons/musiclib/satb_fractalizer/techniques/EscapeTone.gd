@@ -53,7 +53,7 @@ func apply(progression, params):
 	var step_direction = params.get("escape_step_direction", null)
 	if step_direction == null:
 		# Random choice
-		step_direction = "upper" if (progression.rng.randi() % 2 == 0) else "lower"
+		step_direction = "upper" if (randi() % 2 == 0) else "lower"
 
 	# Get the escape pitch (step from anchor)
 	var neighbor_pitches = scale.get_neighbor_pitches(from_pitch)
