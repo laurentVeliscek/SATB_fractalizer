@@ -269,6 +269,9 @@ func _create_technique_instance(technique_id):
 		return PassingTone.new()
 	elif technique_id == Constants.TECHNIQUE_CHROMATIC_PASSING_TONE:
 		return ChromaticPassingTone.new()
+	elif technique_id == Constants.TECHNIQUE_CHROMATIC_NEIGHBOR_TONE:
+		LogBus.warn(TAG, "Technique chromatic_neighbor_tone is not yet implemented")
+		return null
 	elif technique_id == Constants.TECHNIQUE_NEIGHBOR_TONE:
 		return NeighborTone.new()
 	elif technique_id == Constants.TECHNIQUE_NEIGHBOR_TONE_FORCED:
