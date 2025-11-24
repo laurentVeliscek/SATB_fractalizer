@@ -6,6 +6,7 @@ const Constants = preload("res://addons/musiclib/satb_fractalizer/core/Constants
 var ProgressionAdapter = load("res://addons/musiclib/satb_fractalizer/core/ProgressionAdapter.gd")
 var PassingTone = load("res://addons/musiclib/satb_fractalizer/techniques/PassingTone.gd")
 var ChromaticPassingTone = load("res://addons/musiclib/satb_fractalizer/techniques/ChromaticPassingTone.gd")
+var ChromaticNeighborTone = load("res://addons/musiclib/satb_fractalizer/techniques/ChromaticNeighborTone.gd")
 var NeighborTone = load("res://addons/musiclib/satb_fractalizer/techniques/NeighborTone.gd")
 var NeighborToneForced = load("res://addons/musiclib/satb_fractalizer/techniques/NeighborToneForced.gd")
 var DoubleNeighbor = load("res://addons/musiclib/satb_fractalizer/techniques/DoubleNeighbor.gd")
@@ -37,6 +38,7 @@ func apply(chords_array, params):
 	])
 	var triplet_allowed = params.get("triplet_allowed", Constants.DEFAULT_TRIPLET_ALLOWED)
 	var pair_strategy = params.get("pair_selection_strategy", Constants.STRATEGY_EARLIEST)
+	var technique_weights = params.get("technique_weights", {})  # Empty dict = uniform weights
 
 	# Initialize RNG with seed (for reproducibility)
 	var rng_seed = params.get("rng_seed", null)
@@ -92,6 +94,7 @@ func apply(chords_array, params):
 			allowed_techniques,
 			triplet_allowed,
 			pair_strategy,
+			technique_weights,
 			params
 		)
 
@@ -142,7 +145,7 @@ func _get_pattern_voice(window_index, pattern):
 # PROCESS WINDOW
 # =============================================================================
 
-func _process_window(progression, window, window_index, voice_id, allowed_techniques, triplet_allowed, pair_strategy, global_params):
+func _process_window(progression, window, window_index, voice_id, allowed_techniques, triplet_allowed, pair_strategy, technique_weights, global_params):
 	# Select and apply one technique for this window
 
 	# Initialize window report
@@ -167,7 +170,7 @@ func _process_window(progression, window, window_index, voice_id, allowed_techni
 		return progression
 
 	# Select a technique
-	var chosen_technique = _select_technique(allowed_techniques)
+	var chosen_technique = _select_technique(allowed_techniques, technique_weights)
 	if not chosen_technique:
 		LogBus.warn(TAG, "No technique selected, skipping window")
 		window_report.reason_if_skipped = "no_technique_selected"
@@ -249,16 +252,42 @@ func _is_voice_modifiable(progression, voice_id):
 # TECHNIQUE SELECTION
 # =============================================================================
 
-func _select_technique(allowed_techniques):
-	# Simple selection: pick the first allowed technique
-	# (TODO: implement weighted random, preferred order, etc.)
+func _select_technique(allowed_techniques, technique_weights):
+	# Weighted probabilistic technique selection
+	# If technique_weights is provided, uses weighted random selection
+	# Otherwise, uses uniform random selection
 
 	if allowed_techniques.empty():
 		return null
 
-	# For now, randomly select from allowed
-	var idx = randi() % allowed_techniques.size()
-	return allowed_techniques[idx]
+	# If no weights provided or weights empty, use uniform random
+	if not technique_weights or technique_weights.empty():
+		var idx = randi() % allowed_techniques.size()
+		return allowed_techniques[idx]
+
+	# Build weighted list
+	var total_weight = 0.0
+	var cumulative_weights = []
+
+	for technique in allowed_techniques:
+		var weight = technique_weights.get(technique, 1.0)  # Default weight = 1.0
+		total_weight += weight
+		cumulative_weights.append(total_weight)
+
+	if total_weight <= 0.0:
+		# All weights are zero or negative, fallback to uniform
+		var idx = randi() % allowed_techniques.size()
+		return allowed_techniques[idx]
+
+	# Select using weighted random
+	var random_value = randf() * total_weight
+
+	for i in range(cumulative_weights.size()):
+		if random_value <= cumulative_weights[i]:
+			return allowed_techniques[i]
+
+	# Fallback (should not reach here)
+	return allowed_techniques[allowed_techniques.size() - 1]
 
 # =============================================================================
 # TECHNIQUE INSTANTIATION
@@ -269,6 +298,8 @@ func _create_technique_instance(technique_id):
 		return PassingTone.new()
 	elif technique_id == Constants.TECHNIQUE_CHROMATIC_PASSING_TONE:
 		return ChromaticPassingTone.new()
+	elif technique_id == Constants.TECHNIQUE_CHROMATIC_NEIGHBOR_TONE:
+		return ChromaticNeighborTone.new()
 	elif technique_id == Constants.TECHNIQUE_NEIGHBOR_TONE:
 		return NeighborTone.new()
 	elif technique_id == Constants.TECHNIQUE_NEIGHBOR_TONE_FORCED:
