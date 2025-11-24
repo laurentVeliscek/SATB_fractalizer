@@ -52,13 +52,12 @@ func apply(progression, params):
 		LogBus.debug(TAG, "Suspension requires from_pitch to be diatonic in chord_b scale")
 		return progression
 
-	var neighbors = scale_b.get_neighbor_pitches(from_pitch)
-	if neighbors == null or neighbors["lower"] == null:
+	var held_pitch = from_pitch
+	var resolved_pitch = scale_b.get_neighbor_pitches(from_pitch, "lower")
+
+	if resolved_pitch == null:
 		LogBus.warn(TAG, "No lower neighbor found for suspension resolution")
 		return progression
-
-	var held_pitch = from_pitch
-	var resolved_pitch = neighbors["lower"]
 
 	LogBus.debug(TAG, "Suspension: " + str(held_pitch) + " (held) → " + str(resolved_pitch) + " (resolved down)")
 

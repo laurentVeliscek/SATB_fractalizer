@@ -56,12 +56,7 @@ func apply(progression, params):
 		step_direction = "upper" if (randi() % 2 == 0) else "lower"
 
 	# Get the escape pitch (step from anchor)
-	var neighbor_pitches = scale.get_neighbor_pitches(from_pitch)
-	if neighbor_pitches == null:
-		LogBus.warn(TAG, "No diatonic neighbors found for escape anchor " + str(from_pitch))
-		return progression
-
-	var escape_pitch = neighbor_pitches[step_direction]
+	var escape_pitch = scale.get_neighbor_pitches(from_pitch, step_direction)
 	if escape_pitch == null:
 		LogBus.warn(TAG, "No " + step_direction + " neighbor found for escape anchor " + str(from_pitch))
 		return progression

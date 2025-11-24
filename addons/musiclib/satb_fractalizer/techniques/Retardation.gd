@@ -53,13 +53,12 @@ func apply(progression, params):
 		LogBus.debug(TAG, "Retardation requires from_pitch to be diatonic in chord_b scale")
 		return progression
 
-	var neighbors = scale_b.get_neighbor_pitches(from_pitch)
-	if neighbors == null or neighbors["upper"] == null:
+	var held_pitch = from_pitch
+	var resolved_pitch = scale_b.get_neighbor_pitches(from_pitch, "upper")
+
+	if resolved_pitch == null:
 		LogBus.warn(TAG, "No upper neighbor found for retardation resolution")
 		return progression
-
-	var held_pitch = from_pitch
-	var resolved_pitch = neighbors["upper"]
 
 	LogBus.debug(TAG, "Retardation: " + str(held_pitch) + " (held) → " + str(resolved_pitch) + " (resolved up)")
 
