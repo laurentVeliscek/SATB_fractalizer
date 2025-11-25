@@ -102,13 +102,20 @@ func get_beat_strength(time_position):
 
 	var position_in_measure = fmod(time_position, float(time_num))
 
-	# Round to nearest grid subdivision to handle floating point errors
+	# Check if position is on a whole beat (0.0, 1.0, 2.0, 3.0, etc.)
+	# This handles triplets where the first note is on a beat but subsequent notes are off-grid
+	var nearest_beat = round(position_in_measure)
+	if abs(position_in_measure - nearest_beat) < 0.01:  # Tolerance for floating point
+		if beat_strength_map.has(float(nearest_beat)):
+			return beat_strength_map[float(nearest_beat)]
+
+	# Round to nearest grid subdivision to handle binary subdivisions
 	var rounded = stepify(position_in_measure, grid_unit)
 
 	if beat_strength_map.has(rounded):
 		return beat_strength_map[rounded]
 	else:
-		# Default to weak for unknown positions
+		# Default to weak for unknown positions (e.g., triplet subdivisions like 0.333, 0.666)
 		return Constants.BEAT_WEAK
 
 # =============================================================================

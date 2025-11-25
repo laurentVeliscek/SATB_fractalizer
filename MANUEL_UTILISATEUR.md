@@ -366,10 +366,30 @@ var result3 = planner.apply(result2.chords, params3)  # Troisième passe
 
 #### triplet_allowed
 ```gdscript
-"triplet_allowed": false
+"triplet_allowed": true   # Active les triolets de noire
 ```
-- Autorise les subdivisions en triolets
-- Non implémenté dans la version actuelle
+- **Autorise les subdivisions en triolets**
+- **Règle importante** : Seules les **noires (1.0 beat)** sont divisées en triolets
+- Les blanches (2.0 beats) et valeurs supérieures restent binaires
+- Un triolet divise une noire en **3 notes égales** de 0.333... battement chacune
+
+**Fonctionnement :**
+- Si `grid_unit = 0.25` (croche) et qu'un espace d'1 noire est disponible
+- Le système peut créer un triolet : 3 notes de 0.333... beats chacune
+- Les triolets sont identifiés par `"triplet": true` dans les métadonnées du chord
+
+**Exemple :**
+```gdscript
+# Avec grid_unit = 0.25 (croches) et triplet_allowed = true
+# Un espace de 1.0 beat peut être divisé en :
+# - 2 croches (binaire) : [0.5, 0.5]
+# - 4 croches (binaire) : [0.25, 0.25, 0.25, 0.25]
+# - 3 triolets (ternaire) : [0.333..., 0.333..., 0.333...] ← NOUVEAU !
+```
+
+**Force des temps pour triolets :**
+- Première note du triolet (sur le temps) : force normale (forte/moyenne/faible selon position)
+- Deuxième et troisième notes : toujours faibles
 
 #### pair_selection_strategy
 ```gdscript
@@ -1145,6 +1165,98 @@ Fenêtre 1 [2.0 - 4.0]
   Non appliquée : no_valid_pair
 
 ...
+```
+
+---
+
+### 7.6 Exemple 6 : Utiliser les Triolets
+
+**Objectif :** Activer les triolets pour créer des subdivisions ternaires.
+
+```gdscript
+extends Node
+
+const TAG = "ExempleTriolets"
+
+func _ready():
+    LogBus.set_verbose(true)
+
+    var Planner = load("res://addons/musiclib/satb_fractalizer/planner/Planner.gd")
+    var planner = Planner.new()
+
+    var chords = _charger_json("res://chords.json")
+
+    # Configuration avec triolets activés
+    var params = {
+        "time_num": 4,
+        "time_den": 4,
+        "grid_unit": 0.25,  # Croches
+        "time_windows": [
+            {"start": 0.0, "end": 1.0},  # Une noire
+            {"start": 1.0, "end": 2.0},  # Une noire
+            {"start": 2.0, "end": 3.0},  # Une noire
+            {"start": 3.0, "end": 4.0}   # Une noire
+        ],
+        "allowed_techniques": ["passing_tone", "neighbor_tone"],
+        "voice_window_pattern": "SATB",
+        "triplet_allowed": true,  # ← ACTIVER LES TRIOLETS
+        "rng_seed": 42
+    }
+
+    LogBus.info(TAG, "=== Application avec triolets ===")
+    var result = planner.apply(chords, params)
+
+    # Analyser les triolets
+    var triplet_chords = []
+    for chord in result.chords:
+        if chord.get("kind", "") == "decorative":
+            var metadata = chord.get("metadata", {})
+            if metadata.get("triplet", false):
+                triplet_chords.append(chord)
+
+    LogBus.info(TAG, "Accords originaux : " + str(chords.size()))
+    LogBus.info(TAG, "Accords enrichis : " + str(result.chords.size()))
+    LogBus.info(TAG, "Triolets trouvés : " + str(triplet_chords.size()))
+
+    # Afficher les triolets
+    for chord in triplet_chords:
+        print("\nTriolet détecté :")
+        print("  Position : ", chord.pos)
+        print("  Durée : ", chord.length_beats, " (attendu : ~0.333)")
+        print("  Voix modifiée : ", chord.metadata.get("modified_voice", "?"))
+
+    _sauvegarder("res://avec_triolets.json", result.chords)
+
+func _charger_json(chemin):
+    var file = File.new()
+    file.open(chemin, File.READ)
+    var data = parse_json(file.get_as_text())
+    file.close()
+    return data
+
+func _sauvegarder(chemin, chords):
+    var file = File.new()
+    file.open(chemin, File.WRITE)
+    file.store_string(JSON.print(chords, "\t"))
+    file.close()
+```
+
+**Résultat attendu :**
+- Les fenêtres d'une noire (1.0 beat) peuvent être divisées en triolets
+- Chaque note du triolet dure ~0.333 battement
+- Les métadonnées indiquent `"triplet": true`
+
+**Comparaison binaire vs. ternaire :**
+
+Sans triolets (`triplet_allowed: false`) :
+```
+Noire → [0.5, 0.5]  (2 croches)
+Noire → [0.25, 0.25, 0.25, 0.25]  (4 double-croches)
+```
+
+Avec triolets (`triplet_allowed: true`) :
+```
+Noire → [0.333..., 0.333..., 0.333...]  (triolet de croches)
 ```
 
 ---
