@@ -171,14 +171,31 @@ func insert_chords_between(from_index, to_index, new_chords):
 	var chord_a = chords[from_index]
 	var chord_b = chords[to_index]
 
-	# Adjust duration of chord_a to end at first new chord
-	chord_a.duration = new_chords[0].start_time - chord_a.start_time
+	# Calculate new duration for chord_a
+	var new_duration = new_chords[0].start_time - chord_a.start_time
 
-	# Insert new chords at position from_index + 1
-	for i in range(new_chords.size()):
-		chords.insert(from_index + 1 + i, new_chords[i])
+	# If chord_a would have zero or negative duration, remove it instead of keeping it
+	if new_duration <= 0.0001:  # Use small epsilon for floating point comparison
+		LogBus.debug(TAG, "insert_chords_between: removing chord_a (would have zero/negative duration)")
+		# Remove chord_a
+		chords.remove(from_index)
+		# Adjust indices since we removed chord_a
+		# from_index stays the same (now points to what was chord_b)
+		# Insert new chords at from_index (before chord_b)
+		for i in range(new_chords.size()):
+			chords.insert(from_index + i, new_chords[i])
+	else:
+		# Normal case: adjust chord_a duration and insert after it
+		chord_a.duration = new_duration
+		# Insert new chords at position from_index + 1
+		for i in range(new_chords.size()):
+			chords.insert(from_index + 1 + i, new_chords[i])
 
-	LogBus.debug(TAG, "insert_chords_between: inserted " + str(new_chords.size()) + " chords between " + str(from_index) + " and " + str(to_index))
+	# Sort chords by start time to ensure correct order
+	# This is critical when multiple techniques are applied
+	_sort_chords()
+
+	LogBus.debug(TAG, "insert_chords_between: inserted " + str(new_chords.size()) + " chords")
 
 	return true
 
