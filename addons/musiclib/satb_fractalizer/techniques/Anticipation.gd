@@ -93,7 +93,8 @@ func apply(progression, params):
 		Constants.TECHNIQUE_ANTICIPATION,
 		Constants.ROLE_ANTICIPATION,
 		progression.time_grid,
-		generation_depth
+		generation_depth,
+		pair_info.effective_start  # Pass explicit start time
 	)
 
 	# 7. Validate NCT pitches

@@ -92,7 +92,8 @@ func apply(progression, params):
 		Constants.TECHNIQUE_NEIGHBOR_TONE_FORCED,
 		Constants.ROLE_NEIGHBOR_TONE,
 		progression.time_grid,
-		generation_depth
+		generation_depth,
+		pair_info.effective_start  # Pass explicit start time
 	)
 
 	if not _validate_nct_pitches(progression, new_chords, voice_id, from_pitch):

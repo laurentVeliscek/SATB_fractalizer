@@ -86,7 +86,8 @@ func apply(progression, params):
 		Constants.TECHNIQUE_CHROMATIC_PASSING_TONE,
 		Constants.ROLE_CHROMATIC_PASSING_TONE,
 		progression.time_grid,
-		generation_depth
+		generation_depth,
+		pair_info.effective_start  # Pass explicit start time
 	)
 
 	# 10. Validate NCT pitches

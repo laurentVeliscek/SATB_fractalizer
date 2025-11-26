@@ -157,7 +157,8 @@ func apply(progression, params):
 		Constants.TECHNIQUE_EXTENDED_PASSING_TONES,
 		Constants.ROLE_PASSING_TONE,  # Use PASSING_TONE role for the notes
 		progression.time_grid,
-		generation_depth
+		generation_depth,
+		pair_info.effective_start  # Pass explicit start time
 	)
 
 	# 9. Validate NCT pitches

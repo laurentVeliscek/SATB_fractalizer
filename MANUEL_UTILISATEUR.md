@@ -324,14 +324,27 @@ var result3 = planner.apply(result2.chords, params3)  # Troisième passe
 #### time_windows
 ```gdscript
 "time_windows": [
-    {"start": 0.0, "end": 4.0},    # Mesures 1-4
-    {"start": 4.0, "end": 8.0},    # Mesures 5-8
-    {"start": 8.0, "end": 12.0}    # Mesures 9-12
+    {"start": 0.0, "end": 4.0},                    # Mesures 1-4
+    {"start": 4.0, "end": 8.0, "iteration": 2},    # Mesures 5-8, 2 itérations
+    {"start": 8.0, "end": 12.0, "iteration": 3}    # Mesures 9-12, 3 itérations
 ]
 ```
 - Définit les segments temporels où appliquer les techniques
 - Chaque fenêtre traite **une seule voix** (déterminée par le pattern)
-- Chaque fenêtre applique **au maximum une technique**
+- **Paramètre optionnel `iteration`** (défaut = 1) : nombre d'opérations à effectuer sur la fenêtre
+  - `"iteration": 1` : Une seule technique appliquée (comportement par défaut)
+  - `"iteration": 2` : Deux techniques appliquées successivement (peuvent être différentes)
+  - `"iteration": 3` : Trois techniques appliquées successivement
+  - À chaque itération, une technique est sélectionnée aléatoirement (ou par poids) parmi `allowed_techniques`
+
+**Exemple d'utilisation de `iteration` :**
+```gdscript
+# Fenêtre avec 3 itérations = jusqu'à 3 techniques appliquées successivement
+{"start": 0.0, "end": 2.0, "iteration": 3}
+
+# Peut produire : passing_tone → neighbor_tone → chromatic_passing_tone
+# Ou toute autre combinaison selon les poids et la sélection aléatoire
+```
 
 #### allowed_techniques
 ```gdscript

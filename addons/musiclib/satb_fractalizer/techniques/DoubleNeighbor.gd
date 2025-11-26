@@ -102,7 +102,8 @@ func apply(progression, params):
 		Constants.TECHNIQUE_DOUBLE_NEIGHBOR,
 		Constants.ROLE_DOUBLE_NEIGHBOR,
 		progression.time_grid,
-		generation_depth
+		generation_depth,
+		pair_info.effective_start  # Pass explicit start time
 	)
 
 	# 9. Validate NCT pitches
