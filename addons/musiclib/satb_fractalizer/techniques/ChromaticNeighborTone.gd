@@ -122,7 +122,8 @@ func apply(progression, params):
 		Constants.TECHNIQUE_CHROMATIC_NEIGHBOR_TONE,
 		Constants.ROLE_NEIGHBOR_TONE,  # Use NEIGHBOR_TONE role
 		progression.time_grid,
-		generation_depth
+		generation_depth,
+		pair_info.effective_start  # Pass explicit start time
 	)
 
 	# 8. Validate NCT pitches
