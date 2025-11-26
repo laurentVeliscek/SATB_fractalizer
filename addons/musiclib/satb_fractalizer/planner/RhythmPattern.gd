@@ -75,17 +75,22 @@ func _generate_candidates(n_cells, grid_unit, min_note_duration, technique_id, t
 			"triplet": false
 		})
 
+	# Triplet detection (§ Triplet Rule):
+	# - Only quarter notes (1.0 beat) are divided into triplets
+	# - Half notes (2.0 beats) and longer remain binary
+	# - A triplet divides 1.0 beat into 3 equal parts of 0.333... beats each
+	var is_quarter_note_span = abs(span - 1.0) < 0.01  # Tolerance for floating point
+	var is_triplet_candidate = triplet_allowed and is_quarter_note_span
+
 	# 3-note patterns
 	if n_cells >= 3:
-		# Equal division (triplet if span == 2 * min_note_duration)
-		var is_triplet = triplet_allowed and (abs(span - 2.0 * min_note_duration) < 0.001)
-
+		# Equal division (triplet only if span is exactly 1.0 beat = quarter note)
 		candidates.append({
 			"pattern": [span / 3.0, span / 3.0, span / 3.0],
-			"triplet": is_triplet
+			"triplet": is_triplet_candidate
 		})
 
-		# Long-short-short
+		# Long-short-short (binary subdivision)
 		candidates.append({
 			"pattern": [span * 0.5, span * 0.25, span * 0.25],
 			"triplet": false
@@ -93,7 +98,7 @@ func _generate_candidates(n_cells, grid_unit, min_note_duration, technique_id, t
 
 	# 4-note patterns (for longer spans)
 	if n_cells >= 4:
-		# Equal division
+		# Equal division (always binary)
 		candidates.append({
 			"pattern": [span / 4.0, span / 4.0, span / 4.0, span / 4.0],
 			"triplet": false
