@@ -78,15 +78,23 @@ func get_chords_in_time_range(start, end):
 # CHORD PAIR SELECTION
 # =============================================================================
 
-func get_chord_pairs_in_window(window_start, window_end):
+func get_chord_pairs_in_window(window_start, window_end, exclude_decorative_pairs = false):
 	# Returns Array of {from_index, to_index, span_start, span_end, effective_span}
 	# for all consecutive chord pairs that intersect the window
+	#
+	# If exclude_decorative_pairs = true, only returns pairs where BOTH chords are structural (non-decorative)
+	# This is useful for multiple iterations to avoid re-processing already decorated segments
 
 	var pairs = []
 
 	for i in range(chords.size() - 1):
 		var chord_a = chords[i]
 		var chord_b = chords[i + 1]
+
+		# Filter decorative pairs if requested
+		if exclude_decorative_pairs:
+			if chord_a.kind == "decorative" or chord_b.kind == "decorative":
+				continue  # Skip pairs involving decorative chords
 
 		var pair_start = chord_a.start_time
 		var pair_end = chord_b.start_time
