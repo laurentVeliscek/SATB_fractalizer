@@ -78,15 +78,23 @@ func get_chords_in_time_range(start, end):
 # CHORD PAIR SELECTION
 # =============================================================================
 
-func get_chord_pairs_in_window(window_start, window_end):
+func get_chord_pairs_in_window(window_start, window_end, exclude_decorative_pairs = false):
 	# Returns Array of {from_index, to_index, span_start, span_end, effective_span}
 	# for all consecutive chord pairs that intersect the window
+	#
+	# If exclude_decorative_pairs = true, only returns pairs where BOTH chords are structural (non-decorative)
+	# This is useful for multiple iterations to avoid re-processing already decorated segments
 
 	var pairs = []
 
 	for i in range(chords.size() - 1):
 		var chord_a = chords[i]
 		var chord_b = chords[i + 1]
+
+		# Filter decorative pairs if requested
+		if exclude_decorative_pairs:
+			if chord_a.kind == "decorative" or chord_b.kind == "decorative":
+				continue  # Skip pairs involving decorative chords
 
 		var pair_start = chord_a.start_time
 		var pair_end = chord_b.start_time
@@ -163,14 +171,31 @@ func insert_chords_between(from_index, to_index, new_chords):
 	var chord_a = chords[from_index]
 	var chord_b = chords[to_index]
 
-	# Adjust duration of chord_a to end at first new chord
-	chord_a.duration = new_chords[0].start_time - chord_a.start_time
+	# Calculate new duration for chord_a
+	var new_duration = new_chords[0].start_time - chord_a.start_time
 
-	# Insert new chords at position from_index + 1
-	for i in range(new_chords.size()):
-		chords.insert(from_index + 1 + i, new_chords[i])
+	# If chord_a would have zero or negative duration, remove it instead of keeping it
+	if new_duration <= 0.0001:  # Use small epsilon for floating point comparison
+		LogBus.debug(TAG, "insert_chords_between: removing chord_a (would have zero/negative duration)")
+		# Remove chord_a
+		chords.remove(from_index)
+		# Adjust indices since we removed chord_a
+		# from_index stays the same (now points to what was chord_b)
+		# Insert new chords at from_index (before chord_b)
+		for i in range(new_chords.size()):
+			chords.insert(from_index + i, new_chords[i])
+	else:
+		# Normal case: adjust chord_a duration and insert after it
+		chord_a.duration = new_duration
+		# Insert new chords at position from_index + 1
+		for i in range(new_chords.size()):
+			chords.insert(from_index + 1 + i, new_chords[i])
 
-	LogBus.debug(TAG, "insert_chords_between: inserted " + str(new_chords.size()) + " chords between " + str(from_index) + " and " + str(to_index))
+	# Sort chords by start time to ensure correct order
+	# This is critical when multiple techniques are applied
+	_sort_chords()
+
+	LogBus.debug(TAG, "insert_chords_between: inserted " + str(new_chords.size()) + " chords")
 
 	return true
 

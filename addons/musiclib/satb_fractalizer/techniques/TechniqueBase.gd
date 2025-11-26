@@ -19,14 +19,18 @@ func apply(progression, params):
 # UTILITY: SELECT CHORD PAIR
 # =============================================================================
 
-func _select_chord_pair(progression, window, strategy):
+func _select_chord_pair(progression, window, strategy, exclude_decorative_pairs = false):
 	# window: {"start": float, "end": float}
 	# strategy: "earliest" or "longest"
+	# exclude_decorative_pairs: if true, only consider pairs of structural (non-decorative) chords
 
-	var pairs = progression.get_chord_pairs_in_window(window.start, window.end)
+	var pairs = progression.get_chord_pairs_in_window(window.start, window.end, exclude_decorative_pairs)
 
 	if pairs.empty():
-		LogBus.warn(TAG2, "_select_chord_pair: no chord pairs in window [" + str(window.start) + ", " + str(window.end) + "]")
+		if exclude_decorative_pairs:
+			LogBus.warn(TAG2, "_select_chord_pair: no structural chord pairs in window [" + str(window.start) + ", " + str(window.end) + "]")
+		else:
+			LogBus.warn(TAG2, "_select_chord_pair: no chord pairs in window [" + str(window.start) + ", " + str(window.end) + "]")
 		return null
 
 	var selected = progression.select_chord_pair(pairs, strategy)

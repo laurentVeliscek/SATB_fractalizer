@@ -98,6 +98,14 @@ func apply(chords_array, params):
 			var pattern_voice = _get_pattern_voice(w, voice_pattern)
 			LogBus.debug(TAG, "Pattern voice for window " + str(w) + " iter " + str(iter) + ": " + pattern_voice)
 
+			# For iterations after the first, exclude decorative pairs to avoid re-processing
+			# This prevents overlaps and gaps when applying multiple techniques
+			var exclude_decorative = (iter > 0)
+
+			# Create technique params with iteration-specific settings
+			var technique_params = params.duplicate()
+			technique_params["exclude_decorative_pairs"] = exclude_decorative
+
 			# Process window
 			progression = _process_window(
 				progression,
@@ -108,7 +116,7 @@ func apply(chords_array, params):
 				triplet_allowed,
 				pair_strategy,
 				technique_weights,
-				params
+				technique_params
 			)
 
 	# 3. Convert Progression back to JSON Array
